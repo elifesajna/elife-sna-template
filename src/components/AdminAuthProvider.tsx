@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { typedSupabase } from '@/lib/supabase-utils';
 import { useToast } from '@/hooks/use-toast';
 
 interface AdminUser {
@@ -48,7 +48,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setIsLoading(true);
       
       // Query admin_users table
-      const { data, error } = await supabase
+      const { data, error } = await typedSupabase
         .from('admin_users')
         .select('*')
         .eq('username', username)
