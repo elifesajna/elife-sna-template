@@ -241,39 +241,60 @@ export default function MemberDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-600">Mobile:</span>
-                <span className="font-medium">{memberUser.mobileNumber}</span>
+            <div className="space-y-6">
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-600">Mobile:</span>
+                  <span className="font-medium">{memberUser.mobileNumber}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-600">Panchayath:</span>
+                  <span className="font-medium">{memberUser.agent?.panchayaths?.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">{memberUser.agent?.role}</Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-600">Teams:</span>
+                  <span className="font-medium">{teamMemberships.length}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-600">Panchayath:</span>
-                <span className="font-medium">{memberUser.agent?.panchayaths?.name}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">{memberUser.agent?.role}</Badge>
-              </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-600">Teams:</span>
-                <span className="font-medium">{teamMemberships.length}</span>
+
+              {/* Task Summary */}
+              <div className="border-t pt-4">
+                <h4 className="font-medium mb-3 flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Task Summary
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-yellow-50 p-3 rounded-lg">
+                    <div className="text-sm text-yellow-600">Pending Personal Tasks</div>
+                    <div className="text-2xl font-bold text-yellow-800">{pendingPersonalTasks.length}</div>
+                  </div>
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <div className="text-sm text-green-600">Completed Personal Tasks</div>
+                    <div className="text-2xl font-bold text-green-800">{completedPersonalTasks.length}</div>
+                  </div>
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <div className="text-sm text-blue-600">Team Tasks</div>
+                    <div className="text-2xl font-bold text-blue-800">{teamTasks.length}</div>
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Dashboard Tabs */}
-        <Tabs defaultValue="pending" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="pending" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Pending Tasks ({pendingPersonalTasks.length})
-            </TabsTrigger>
-            <TabsTrigger value="completed" className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Completed Tasks ({completedPersonalTasks.length})
+        <Tabs defaultValue="personal" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="personal" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Personal Tasks
             </TabsTrigger>
             <TabsTrigger value="team" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -281,60 +302,75 @@ export default function MemberDashboard() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="pending" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Pending Personal Tasks</CardTitle>
-                <CardDescription>
-                  Tasks specifically assigned to you that need attention
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {pendingPersonalTasks.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    No pending personal tasks found.
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {pendingPersonalTasks.map((task) => (
-                      <PersonalTaskCard 
-                        key={task.id} 
-                        task={task} 
-                        onTaskUpdate={() => fetchData(memberUser)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+          <TabsContent value="personal" className="mt-6">
+            <Tabs defaultValue="pending" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="pending" className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Pending ({pendingPersonalTasks.length})
+                </TabsTrigger>
+                <TabsTrigger value="completed" className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Completed ({completedPersonalTasks.length})
+                </TabsTrigger>
+              </TabsList>
 
-          <TabsContent value="completed" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Completed Personal Tasks</CardTitle>
-                <CardDescription>
-                  Your completed tasks with completion details
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {completedPersonalTasks.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    No completed personal tasks found.
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {completedPersonalTasks.map((task) => (
-                      <PersonalTaskCard 
-                        key={task.id} 
-                        task={task} 
-                        onTaskUpdate={() => fetchData(memberUser)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              <TabsContent value="pending" className="mt-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Pending Personal Tasks</CardTitle>
+                    <CardDescription>
+                      Tasks specifically assigned to you that need attention
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {pendingPersonalTasks.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        No pending personal tasks found.
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {pendingPersonalTasks.map((task) => (
+                          <PersonalTaskCard 
+                            key={task.id} 
+                            task={task} 
+                            onTaskUpdate={() => fetchData(memberUser)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="completed" className="mt-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Completed Personal Tasks</CardTitle>
+                    <CardDescription>
+                      Your completed tasks with completion details
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {completedPersonalTasks.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        No completed personal tasks found.
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {completedPersonalTasks.map((task) => (
+                          <PersonalTaskCard 
+                            key={task.id} 
+                            task={task} 
+                            onTaskUpdate={() => fetchData(memberUser)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           <TabsContent value="team" className="mt-6">

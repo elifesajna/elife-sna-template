@@ -29,8 +29,10 @@ const TeamTaskCard: React.FC<TeamTaskCardProps> = ({ task, onTaskUpdate, canModi
   const [remarks, setRemarks] = React.useState('');
   const [isRemarksDialogOpen, setIsRemarksDialogOpen] = React.useState(false);
   const [isViewRemarksDialogOpen, setIsViewRemarksDialogOpen] = React.useState(false);
+  const [isEditRemarksDialogOpen, setIsEditRemarksDialogOpen] = React.useState(false);
   const [existingRemarks, setExistingRemarks] = React.useState<any[]>([]);
   const [pendingStatus, setPendingStatus] = React.useState<'completed' | 'cancelled' | null>(null);
+  const [editingRemark, setEditingRemark] = React.useState<any>(null);
   const { toast } = useToast();
 
   const getStatusColor = (status: string) => {
@@ -136,6 +138,78 @@ const TeamTaskCard: React.FC<TeamTaskCardProps> = ({ task, onTaskUpdate, canModi
     }
   };
 
+  const handleEditRemark = (remark: any) => {
+    setEditingRemark(remark);
+    setRemarks(remark.remark);
+    setIsEditRemarksDialogOpen(true);
+  };
+
+  const handleUpdateRemark = async () => {
+    if (!editingRemark) return;
+    
+    try {
+      const { error } = await supabase
+        .from('task_remarks')
+        .update({ 
+          remark: remarks.trim(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingRemark.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Remark updated successfully",
+      });
+      
+      setIsEditRemarksDialogOpen(false);
+      setRemarks('');
+      setEditingRemark(null);
+      fetchTaskRemarks();
+    } catch (error) {
+      console.error('Error updating remark:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update remark",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddRemark = async () => {
+    if (!remarks.trim()) return;
+    
+    try {
+      const { error } = await supabase
+        .from('task_remarks')
+        .insert({
+          task_id: task.id,
+          remark: remarks.trim(),
+          status: task.status,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Remark added successfully",
+      });
+      
+      setIsRemarksDialogOpen(false);
+      setRemarks('');
+      fetchTaskRemarks();
+    } catch (error) {
+      console.error('Error adding remark:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add remark",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Card className="p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-2">
@@ -167,7 +241,7 @@ const TeamTaskCard: React.FC<TeamTaskCardProps> = ({ task, onTaskUpdate, canModi
         )}
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <Button
           size="sm"
           variant="ghost"
@@ -176,6 +250,19 @@ const TeamTaskCard: React.FC<TeamTaskCardProps> = ({ task, onTaskUpdate, canModi
         >
           <Eye className="h-4 w-4" />
           View Remarks
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            setRemarks('');
+            setIsRemarksDialogOpen(true);
+          }}
+          className="flex items-center gap-1"
+        >
+          <MessageSquare className="h-4 w-4" />
+          Add Remark
         </Button>
         
         {canModify && task.status === 'pending' && (
@@ -238,13 +325,19 @@ const TeamTaskCard: React.FC<TeamTaskCardProps> = ({ task, onTaskUpdate, canModi
               >
                 Cancel
               </Button>
-              <Button
-                onClick={() => pendingStatus && handleStatusChange(pendingStatus)}
-                className={pendingStatus === 'completed' ? 'bg-green-600 hover:bg-green-700' : ''}
-                variant={pendingStatus === 'completed' ? 'default' : 'destructive'}
-              >
-                {pendingStatus === 'completed' ? 'Complete Task' : 'Cancel Task'}
-              </Button>
+              {pendingStatus ? (
+                <Button
+                  onClick={() => pendingStatus && handleStatusChange(pendingStatus)}
+                  className={pendingStatus === 'completed' ? 'bg-green-600 hover:bg-green-700' : ''}
+                  variant={pendingStatus === 'completed' ? 'default' : 'destructive'}
+                >
+                  {pendingStatus === 'completed' ? 'Complete Task' : 'Cancel Task'}
+                </Button>
+              ) : (
+                <Button onClick={handleAddRemark}>
+                  Add Remark
+                </Button>
+              )}
             </div>
           </div>
         </DialogContent>
@@ -271,9 +364,19 @@ const TeamTaskCard: React.FC<TeamTaskCardProps> = ({ task, onTaskUpdate, canModi
                 <div key={index} className="border rounded-lg p-3 bg-gray-50">
                   <div className="flex justify-between items-start mb-2">
                     <Badge variant="outline">{remark.status}</Badge>
-                    <span className="text-xs text-gray-500">
-                      {new Date(remark.created_at).toLocaleString()}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500">
+                        {new Date(remark.created_at).toLocaleString()}
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleEditRemark(remark)}
+                        className="h-6 px-2 text-xs"
+                      >
+                        Edit
+                      </Button>
+                    </div>
                   </div>
                   <p className="text-gray-700">{remark.remark}</p>
                 </div>
@@ -288,6 +391,50 @@ const TeamTaskCard: React.FC<TeamTaskCardProps> = ({ task, onTaskUpdate, canModi
             >
               Close
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Remark Dialog */}
+      <Dialog open={isEditRemarksDialogOpen} onOpenChange={setIsEditRemarksDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Edit Remark
+            </DialogTitle>
+            <DialogDescription>
+              Update the remark for this team task
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-remarks">Remark</Label>
+              <Textarea
+                id="edit-remarks"
+                placeholder="Enter your remark..."
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                rows={4}
+              />
+            </div>
+            
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditRemarksDialogOpen(false);
+                  setRemarks('');
+                  setEditingRemark(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateRemark}>
+                Update Remark
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
