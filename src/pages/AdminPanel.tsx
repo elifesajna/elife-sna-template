@@ -9,7 +9,7 @@ import { AdminAuthProvider, useAdminAuth } from "@/components/AdminAuthProvider"
 import AdminLogin from "@/components/AdminLogin";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import UserManagement from "@/components/UserManagement";
-import UserApprovals from "@/components/UserApprovals";
+import MemberApprovals from "@/components/MemberApprovals";
 import TeamManagement from "@/components/TeamManagement";
 import TaskManagement from "@/components/TaskManagement";
 import PanchayathManagement from "@/components/PanchayathManagement";
@@ -81,7 +81,7 @@ const AdminPanelContent = () => {
               <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="/dashboard" element={<AdminDashboard />} />
               <Route path="/users" element={<UserManagement />} />
-              <Route path="/approvals" element={<UserApprovals />} />
+              <Route path="/approvals" element={<MemberApprovals />} />
               <Route path="/teams" element={<TeamManagement />} />
               <Route path="/tasks" element={<TaskManagement />} />
               <Route path="/panchayaths" element={<PanchayathManagement />} />

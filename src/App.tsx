@@ -10,10 +10,8 @@ import TaskManagement from './pages/TaskManagement';
 import PanchayathNotes from './pages/PanchayathNotes';
 import NotFound from './pages/NotFound';
 
-import GuestLogin from './pages/GuestLogin';
-import TeamLoginPage from './pages/TeamLoginPage';
-import TeamDashboard from './pages/TeamDashboard';
-import PersonalDashboard from './pages/PersonalDashboard';
+import MembersLogin from './pages/MembersLogin';
+import MemberDashboard from './pages/MemberDashboard';
 import { AuthProvider } from './components/AuthProvider';
 import AdminPanel from './pages/AdminPanel';
 
@@ -39,10 +37,8 @@ function App() {
               <Route path="/task-management" element={<TaskManagement />} />
               <Route path="/panchayath-notes" element={<PanchayathNotes />} />
               <Route path="/admin/*" element={<AdminPanel />} />
-              <Route path="/guest-login" element={<GuestLogin />} />
-              <Route path="/team-login" element={<TeamLoginPage />} />
-              <Route path="/team-dashboard" element={<TeamDashboard />} />
-              <Route path="/personal-dashboard" element={<PersonalDashboard />} />
+              <Route path="/members" element={<MembersLogin />} />
+              <Route path="/member-dashboard" element={<MemberDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster />

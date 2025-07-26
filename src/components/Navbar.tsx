@@ -43,23 +43,13 @@ export const Navbar = () => {
               </Button>
             </Link>
             
-            <Link to="/team-login">
+            <Link to="/members">
               <Button 
-                variant={location.pathname === '/team-login' ? 'default' : 'ghost'}
+                variant={location.pathname === '/members' ? 'default' : 'ghost'}
                 className="flex items-center gap-2"
               >
                 <Users className="h-4 w-4" />
-                Team Login
-              </Button>
-            </Link>
-            
-            <Link to="/guest-login">
-              <Button 
-                variant={location.pathname === '/guest-login' ? 'default' : 'ghost'}
-                className="flex items-center gap-2"
-              >
-                <UserPlus className="h-4 w-4" />
-                Guest Access
+                Members
               </Button>
             </Link>
             
