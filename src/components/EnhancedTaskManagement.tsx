@@ -36,7 +36,7 @@ const EnhancedTaskManagement = () => {
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed' | 'cancelled' | 'expired'>('all');
   const [filterType, setFilterType] = useState<string>('all'); // agent or team
   const { toast } = useToast();
 
@@ -131,8 +131,10 @@ const EnhancedTaskManagement = () => {
   };
 
   const filteredTasks = tasks.filter(task => {
+    if (filterStatus === 'expired') {
+      return isExpired(task.due_date);
+    }
     if (filterStatus !== 'all' && task.status !== filterStatus) return false;
-    if (filterStatus === 'expired' && !isExpired(task.due_date)) return false;
     if (filterType === 'agent' && !task.allocated_to_agent) return false;
     if (filterType === 'team' && !task.allocated_to_team) return false;
     return true;
@@ -160,7 +162,7 @@ const EnhancedTaskManagement = () => {
           <div className="flex gap-4 mb-6">
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <Select value={filterStatus} onValueChange={(value: 'all' | 'pending' | 'completed' | 'cancelled' | 'expired') => setFilterStatus(value)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
