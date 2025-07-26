@@ -9,6 +9,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import PersonalTaskCard from "@/components/PersonalTaskCard";
+import TeamTaskCard from "@/components/TeamTaskCard";
 
 interface Task {
   id: string;
@@ -372,34 +373,12 @@ export default function MemberDashboard() {
                     {/* Team Tasks */}
                     <div className="space-y-4">
                       {teamTasks.map((task) => (
-                        <div key={task.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                          <div className="flex items-start justify-between mb-2">
-                            <h3 className="font-semibold text-lg">{task.title}</h3>
-                            <div className="flex gap-2">
-                              <Badge className={getStatusColor(task.status)}>
-                                {task.status.replace('_', ' ')}
-                              </Badge>
-                              <Badge className={getPriorityColor(task.priority)}>
-                                {task.priority}
-                              </Badge>
-                            </div>
-                          </div>
-                          {task.description && (
-                            <p className="text-gray-600 mb-3">{task.description}</p>
-                          )}
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-4 w-4" />
-                              <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
-                            </div>
-                            {task.due_date && (
-                              <div className="flex items-center gap-1">
-                                <Clock className="h-4 w-4" />
-                                <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                        <TeamTaskCard 
+                          key={task.id} 
+                          task={task} 
+                          onTaskUpdate={() => fetchData(memberUser)}
+                          canModify={true} // Allow team members to modify team tasks
+                        />
                       ))}
                     </div>
                   </div>

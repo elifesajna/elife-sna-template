@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Calendar, Clock, CheckCircle, XCircle, MessageSquare, Eye } from "lucide-react";
@@ -20,12 +19,13 @@ interface Task {
   created_at: string;
 }
 
-interface PersonalTaskCardProps {
+interface TeamTaskCardProps {
   task: Task;
   onTaskUpdate: () => void;
+  canModify?: boolean; // Whether the user can modify team tasks
 }
 
-const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({ task, onTaskUpdate }) => {
+const TeamTaskCard: React.FC<TeamTaskCardProps> = ({ task, onTaskUpdate, canModify = false }) => {
   const [remarks, setRemarks] = React.useState('');
   const [isRemarksDialogOpen, setIsRemarksDialogOpen] = React.useState(false);
   const [isViewRemarksDialogOpen, setIsViewRemarksDialogOpen] = React.useState(false);
@@ -61,7 +61,7 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({ task, onTaskUpdate 
 
   const handleStatusChange = async (newStatus: 'completed' | 'cancelled') => {
     try {
-      console.log('Updating task status:', { taskId: task.id, status: newStatus, remarks });
+      console.log('Updating team task status:', { taskId: task.id, status: newStatus, remarks });
       
       // Update task status
       const { error: taskError } = await supabase
@@ -93,7 +93,7 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({ task, onTaskUpdate 
 
       toast({
         title: "Success",
-        description: `Task marked as ${newStatus}`,
+        description: `Team task marked as ${newStatus}`,
       });
       
       setIsRemarksDialogOpen(false);
@@ -101,10 +101,10 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({ task, onTaskUpdate 
       setPendingStatus(null);
       onTaskUpdate();
     } catch (error) {
-      console.error('Error updating task:', error);
+      console.error('Error updating team task:', error);
       toast({
         title: "Error",
-        description: "Failed to update task status",
+        description: "Failed to update team task status",
         variant: "destructive",
       });
     }
@@ -178,7 +178,7 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({ task, onTaskUpdate 
           View Remarks
         </Button>
         
-        {task.status === 'pending' && (
+        {canModify && task.status === 'pending' && (
           <>
             <Button
               size="sm"
@@ -208,10 +208,10 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({ task, onTaskUpdate 
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
-              {pendingStatus === 'completed' ? 'Complete Task' : 'Cancel Task'}
+              {pendingStatus === 'completed' ? 'Complete Team Task' : 'Cancel Team Task'}
             </DialogTitle>
             <DialogDescription>
-              Add remarks about this task (optional)
+              Add remarks about this team task (optional)
             </DialogDescription>
           </DialogHeader>
           
@@ -220,7 +220,7 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({ task, onTaskUpdate 
               <Label htmlFor="remarks">Remarks</Label>
               <Textarea
                 id="remarks"
-                placeholder="Enter any comments or remarks about this task..."
+                placeholder="Enter any comments or remarks about this team task..."
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 rows={4}
@@ -256,16 +256,16 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({ task, onTaskUpdate 
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
-              Task Remarks
+              Team Task Remarks
             </DialogTitle>
             <DialogDescription>
-              View all remarks and comments for this task
+              View all remarks and comments for this team task
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 max-h-96 overflow-y-auto">
             {existingRemarks.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No remarks found for this task.</p>
+              <p className="text-gray-500 text-center py-4">No remarks found for this team task.</p>
             ) : (
               existingRemarks.map((remark, index) => (
                 <div key={index} className="border rounded-lg p-3 bg-gray-50">
@@ -295,4 +295,4 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({ task, onTaskUpdate 
   );
 };
 
-export default PersonalTaskCard;
+export default TeamTaskCard;
