@@ -7,18 +7,26 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
 import { Navbar } from '@/components/Navbar';
 const Index = () => {
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const [guestUser, setGuestUser] = useState(null);
+  const [memberUser, setMemberUser] = useState(null);
+  
   useEffect(() => {
     // Check for guest user session
     const storedGuestUser = localStorage.getItem('guest_user');
     if (storedGuestUser) {
       setGuestUser(JSON.parse(storedGuestUser));
     }
+    
+    // Check for member user session
+    const storedMemberUser = localStorage.getItem('member_user');
+    if (storedMemberUser) {
+      setMemberUser(JSON.parse(storedMemberUser));
+    }
   }, []);
-  const isAuthenticated = user || guestUser;
+  
+  const isAuthenticated = user || guestUser || memberUser;
+  const currentPanchayathId = memberUser?.panchayath_id || guestUser?.panchayath_id;
   return <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <Navbar />
       
@@ -26,10 +34,10 @@ const Index = () => {
       <header className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
         <div className="max-w-6xl mx-auto py-12 px-6 bg-cyan-950">
           <h1 className="text-4xl font-bold mb-4">
-            Welcome to Panchayath Management System
+            {memberUser ? `Welcome, ${memberUser.name}` : 'Welcome to Panchayath Management System'}
           </h1>
           <p className="text-xl text-blue-100">
-            Streamline operations, enhance transparency, and empower communities
+            {memberUser ? `${memberUser.panchayath?.name || 'Your Panchayath'} Management Dashboard` : 'Streamline operations, enhance transparency, and empower communities'}
           </p>
         </div>
       </header>

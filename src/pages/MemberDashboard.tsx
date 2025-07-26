@@ -68,16 +68,28 @@ export default function MemberDashboard() {
       setPersonalTasks(personalTasksData || []);
 
       // Check team memberships for this agent
-      const { data: teamMemberData, error: teamMemberError } = await supabase
-        .from('management_team_members')
-        .select(`
-          *,
-          management_teams(name, description)
-        `)
-        .eq('agent_id', user.agentId);
+      // Note: Since member user structure might not have agentId, we need to look up the agent first
+      const { data: agentData, error: agentError } = await supabase
+        .from('agents')
+        .select('id')
+        .eq('phone', user.mobileNumber)
+        .single();
 
-      if (teamMemberError) throw teamMemberError;
-      setTeamMemberships(teamMemberData || []);
+      let teamMemberData = [];
+      if (agentData && !agentError) {
+        const { data: teamMemberQueryData, error: teamMemberError } = await supabase
+          .from('management_team_members')
+          .select(`
+            *,
+            management_teams(name, description)
+          `)
+          .eq('agent_id', agentData.id);
+
+        if (teamMemberError) throw teamMemberError;
+        teamMemberData = teamMemberQueryData || [];
+      }
+
+      setTeamMemberships(teamMemberData);
 
       // Fetch team tasks if user is a team member
       if (teamMemberData && teamMemberData.length > 0) {

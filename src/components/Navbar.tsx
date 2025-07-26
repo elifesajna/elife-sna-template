@@ -1,17 +1,35 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Settings, UserPlus, Users, Home, LogOut } from "lucide-react";
+import { Settings, UserPlus, Users, Home, LogOut, User } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 
 export const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  
+  // Check for member user
+  const [memberUser, setMemberUser] = React.useState(null);
+  
+  React.useEffect(() => {
+    const storedMemberUser = localStorage.getItem('member_user');
+    if (storedMemberUser) {
+      setMemberUser(JSON.parse(storedMemberUser));
+    } else {
+      setMemberUser(null);
+    }
+  }, [location.pathname]); // Re-check on route changes
 
   const handleLogout = () => {
-    logout();
-    navigate('/');
+    if (memberUser) {
+      localStorage.removeItem('member_user');
+      setMemberUser(null);
+      navigate('/');
+    } else {
+      logout();
+      navigate('/');
+    }
   };
 
   return (
@@ -43,17 +61,29 @@ export const Navbar = () => {
               </Button>
             </Link>
             
-            <Link to="/members">
-              <Button 
-                variant={location.pathname === '/members' ? 'default' : 'ghost'}
-                className="flex items-center gap-2"
-              >
-                <Users className="h-4 w-4" />
-                Members
-              </Button>
-            </Link>
+            {memberUser ? (
+              <Link to="/member-dashboard">
+                <Button 
+                  variant={location.pathname === '/member-dashboard' ? 'default' : 'ghost'}
+                  className="flex items-center gap-2"
+                >
+                  <User className="h-4 w-4" />
+                  Member Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/members">
+                <Button 
+                  variant={location.pathname === '/members' ? 'default' : 'ghost'}
+                  className="flex items-center gap-2"
+                >
+                  <Users className="h-4 w-4" />
+                  Members
+                </Button>
+              </Link>
+            )}
             
-            {user && (
+            {(user || memberUser) && (
               <Button 
                 variant="outline"
                 onClick={handleLogout}

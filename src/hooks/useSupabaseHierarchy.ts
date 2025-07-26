@@ -43,8 +43,9 @@ export const useSupabaseHierarchy = (filterPanchayathId?: string) => {
     try {
       setIsLoading(true);
       
-      // Check if user is a guest with panchayath restriction
+      // Check if user is a guest or member with panchayath restriction
       const guestUser = localStorage.getItem('guest_user');
+      const memberUser = localStorage.getItem('member_user');
       let panchayathFilter = filterPanchayathId;
       
       if (guestUser && !filterPanchayathId) {
@@ -53,6 +54,15 @@ export const useSupabaseHierarchy = (filterPanchayathId?: string) => {
         if (userData.panchayath_id) {
           panchayathFilter = userData.panchayath_id;
           console.log('Filtering for panchayath:', panchayathFilter);
+        }
+      }
+      
+      if (memberUser && !filterPanchayathId) {
+        const userData = JSON.parse(memberUser);
+        console.log('Member user data:', userData);
+        if (userData.panchayath_id) {
+          panchayathFilter = userData.panchayath_id;
+          console.log('Filtering for member panchayath:', panchayathFilter);
         }
       }
       
