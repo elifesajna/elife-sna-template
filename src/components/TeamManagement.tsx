@@ -29,6 +29,13 @@ interface Agent {
   panchayath_id: string;
 }
 
+interface Panchayath {
+  id: string;
+  name: string;
+  district?: string;
+  state?: string;
+}
+
 interface TeamMember {
   id: string;
   team_id: string;
@@ -39,6 +46,7 @@ interface TeamMember {
 const TeamManagement = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [panchayaths, setPanchayaths] = useState<Panchayath[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -51,6 +59,7 @@ const TeamManagement = () => {
   const [manualMemberData, setManualMemberData] = useState({
     name: '',
     phone: '',
+    panchayath_id: '',
   });
   const [formData, setFormData] = useState({
     name: '',
@@ -114,6 +123,15 @@ const TeamManagement = () => {
 
       if (agentsError) throw agentsError;
       setAgents(agentsData || []);
+
+      // Fetch panchayaths
+      const { data: panchayathsData, error: panchayathsError } = await supabase
+        .from('panchayaths')
+        .select('*')
+        .order('name');
+
+      if (panchayathsError) throw panchayathsError;
+      setPanchayaths(panchayathsData || []);
 
       // Fetch team members
       const { data: membersData, error: membersError } = await supabase
@@ -255,7 +273,7 @@ const TeamManagement = () => {
             name: manualMemberData.name,
             phone: manualMemberData.phone,
             role: 'coordinator',
-            panchayath_id: '6480aff6-d501-4a8e-8d5e-01f573f3e966', // Default panchayath
+            panchayath_id: manualMemberData.panchayath_id || panchayaths[0]?.id || '',
           })
           .select()
           .single();
@@ -296,6 +314,7 @@ const TeamManagement = () => {
       setManualMemberData({
         name: '',
         phone: '',
+        panchayath_id: '',
       });
     } catch (error) {
       console.error('Error adding member:', error);
@@ -594,6 +613,25 @@ const TeamManagement = () => {
                   onChange={(e) => setManualMemberData({ ...manualMemberData, phone: e.target.value })}
                   placeholder="Enter phone number"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="manual-panchayath">Panchayath</Label>
+                <Select 
+                  value={manualMemberData.panchayath_id} 
+                  onValueChange={(value) => setManualMemberData({ ...manualMemberData, panchayath_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select panchayath" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {panchayaths.map((panchayath) => (
+                      <SelectItem key={panchayath.id} value={panchayath.id}>
+                        {panchayath.name} {panchayath.district && `- ${panchayath.district}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
             </div>
