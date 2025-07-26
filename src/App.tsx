@@ -13,6 +13,7 @@ import NotFound from './pages/NotFound';
 import MembersLogin from './pages/MembersLogin';
 import MemberDashboard from './pages/MemberDashboard';
 import { AuthProvider } from './components/AuthProvider';
+import { AdminAuthProvider } from './components/AdminAuthProvider';
 import AdminPanel from './pages/AdminPanel';
 
 const queryClient = new QueryClient({
@@ -27,8 +28,9 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
+      <AdminAuthProvider>
+        <AuthProvider>
+          <BrowserRouter>
           <div className="min-h-screen bg-background">
             <Routes>
               <Route path="/" element={<Index />} />
@@ -43,8 +45,9 @@ function App() {
             </Routes>
             <Toaster />
           </div>
-        </BrowserRouter>
-      </AuthProvider>
+          </BrowserRouter>
+        </AuthProvider>
+      </AdminAuthProvider>
     </QueryClientProvider>
   );
 }

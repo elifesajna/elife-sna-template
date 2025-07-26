@@ -5,9 +5,11 @@ import { CheckSquare, TreePine, Users, FileText, ClipboardList, CalendarDays } f
 import { DailyActivityLog } from '@/components/DailyActivityLog';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
+import { useAdminAuth } from '@/components/AdminAuthProvider';
 import { Navbar } from '@/components/Navbar';
 const Index = () => {
   const { user } = useAuth();
+  const { adminUser } = useAdminAuth();
   const [guestUser, setGuestUser] = useState(null);
   const [memberUser, setMemberUser] = useState(null);
   
@@ -25,7 +27,7 @@ const Index = () => {
     }
   }, []);
   
-  const isAuthenticated = user || guestUser || memberUser;
+  const isAuthenticated = user || guestUser || memberUser || adminUser;
   const currentPanchayathId = memberUser?.panchayath_id || guestUser?.panchayath_id;
   return <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <Navbar />
@@ -34,10 +36,14 @@ const Index = () => {
       <header className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
         <div className="max-w-6xl mx-auto py-12 px-6 bg-cyan-950">
           <h1 className="text-4xl font-bold mb-4">
-            {memberUser ? `Welcome, ${memberUser.name}` : 'Welcome to Panchayath Management System'}
+            {adminUser ? `Welcome Admin, ${adminUser.username}` : 
+             memberUser ? `Welcome, ${memberUser.name}` : 
+             'Welcome to Panchayath Management System'}
           </h1>
           <p className="text-xl text-blue-100">
-            {memberUser ? `${memberUser.panchayath?.name || 'Your Panchayath'} Management Dashboard` : 'Streamline operations, enhance transparency, and empower communities'}
+            {adminUser ? 'Admin Control Panel - Full System Access' :
+             memberUser ? `${memberUser.panchayath?.name || 'Your Panchayath'} Management Dashboard` : 
+             'Streamline operations, enhance transparency, and empower communities'}
           </p>
         </div>
       </header>
