@@ -35,15 +35,15 @@ const MemberApprovals = () => {
   useEffect(() => {
     fetchRegistrations();
     
-    // Real-time subscription
+    // Fixed real-time subscription table name
     const channel = supabase
-      .channel('member-registrations')
+      .channel('user-registration-requests')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'member_registrations'
+          table: 'user_registration_requests'
         },
         () => {
           fetchRegistrations();
@@ -128,12 +128,16 @@ const MemberApprovals = () => {
 
   const handleDelete = async (registrationId: string) => {
     try {
+      console.log('Deleting registration:', registrationId);
       const { error } = await supabase
         .from('user_registration_requests')
         .delete()
         .eq('id', registrationId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
 
       toast({
         title: "Success",
@@ -142,6 +146,7 @@ const MemberApprovals = () => {
       
       setIsDeleteDialogOpen(false);
       setDeletingId(null);
+      fetchRegistrations(); // Refresh the list
     } catch (error) {
       console.error('Error deleting registration:', error);
       toast({

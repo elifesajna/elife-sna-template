@@ -3,13 +3,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, CheckSquare, Clock, CheckCircle } from "lucide-react";
+import { ArrowLeft, CheckSquare, Clock, CheckCircle, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AddTaskForm } from "@/components/AddTaskForm";
 import { ViewTasks } from "@/components/ViewTasks";
+import EnhancedTaskManagement from "@/components/EnhancedTaskManagement";
 
 const TaskManagement = () => {
-  const [activeTab, setActiveTab] = useState<'add' | 'pending' | 'completed'>('add');
+  const [activeTab, setActiveTab] = useState<'add' | 'pending' | 'completed' | 'enhanced'>('enhanced');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 p-6">
@@ -30,8 +31,12 @@ const TaskManagement = () => {
 
         <Card>
           <CardContent className="p-6">
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'add' | 'pending' | 'completed')} className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'add' | 'pending' | 'completed' | 'enhanced')} className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="enhanced" className="flex items-center gap-2">
+                  <Eye className="h-4 w-4" />
+                  View All Tasks
+                </TabsTrigger>
                 <TabsTrigger value="add" className="flex items-center gap-2">
                   <CheckSquare className="h-4 w-4" />
                   Add Tasks
@@ -45,6 +50,10 @@ const TaskManagement = () => {
                   Completed Tasks
                 </TabsTrigger>
               </TabsList>
+              
+              <TabsContent value="enhanced" className="mt-6">
+                <EnhancedTaskManagement />
+              </TabsContent>
               
               <TabsContent value="add" className="mt-6">
                 <Card>

@@ -1,0 +1,221 @@
+
+import React from 'react';
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Calendar, Clock, CheckCircle, XCircle, MessageSquare } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: 'pending' | 'completed' | 'cancelled';
+  priority: 'high' | 'medium' | 'normal';
+  due_date?: string;
+  created_at: string;
+}
+
+interface PersonalTaskCardProps {
+  task: Task;
+  onTaskUpdate: () => void;
+}
+
+const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({ task, onTaskUpdate }) => {
+  const [remarks, setRemarks] = React.useState('');
+  const [isRemarksDialogOpen, setIsRemarksDialogOpen] = React.useState(false);
+  const [pendingStatus, setPendingStatus] = React.useState<'completed' | 'cancelled' | null>(null);
+  const { toast } = useToast();
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return 'bg-red-100 text-red-800';
+      case 'medium':
+        return 'bg-orange-100 text-orange-800';
+      case 'normal':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const handleStatusChange = async (newStatus: 'completed' | 'cancelled') => {
+    try {
+      console.log('Updating task status:', { taskId: task.id, status: newStatus, remarks });
+      
+      // Update task status
+      const { error: taskError } = await supabase
+        .from('tasks')
+        .update({ 
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', task.id);
+
+      if (taskError) throw taskError;
+
+      // Add remarks if provided
+      if (remarks.trim()) {
+        const { error: remarkError } = await supabase
+          .from('task_remarks')
+          .insert({
+            task_id: task.id,
+            remark: remarks.trim(),
+            status: newStatus,
+            created_at: new Date().toISOString()
+          });
+
+        if (remarkError) {
+          console.error('Error adding remark:', remarkError);
+          // Don't throw here, as the main task update succeeded
+        }
+      }
+
+      toast({
+        title: "Success",
+        description: `Task marked as ${newStatus}`,
+      });
+      
+      setIsRemarksDialogOpen(false);
+      setRemarks('');
+      setPendingStatus(null);
+      onTaskUpdate();
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update task status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const openRemarksDialog = (status: 'completed' | 'cancelled') => {
+    setPendingStatus(status);
+    setIsRemarksDialogOpen(true);
+  };
+
+  return (
+    <Card className="p-4 hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between mb-2">
+        <h3 className="font-semibold text-lg">{task.title}</h3>
+        <div className="flex gap-2">
+          <Badge className={getStatusColor(task.status)}>
+            {task.status.replace('_', ' ')}
+          </Badge>
+          <Badge className={getPriorityColor(task.priority)}>
+            {task.priority}
+          </Badge>
+        </div>
+      </div>
+      
+      {task.description && (
+        <p className="text-gray-600 mb-3">{task.description}</p>
+      )}
+      
+      <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+        <div className="flex items-center gap-1">
+          <Calendar className="h-4 w-4" />
+          <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
+        </div>
+        {task.due_date && (
+          <div className="flex items-center gap-1">
+            <Clock className="h-4 w-4" />
+            <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>
+          </div>
+        )}
+      </div>
+
+      {task.status === 'pending' && (
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="default"
+            onClick={() => openRemarksDialog('completed')}
+            className="bg-green-600 hover:bg-green-700 flex items-center gap-1"
+          >
+            <CheckCircle className="h-4 w-4" />
+            Complete
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => openRemarksDialog('cancelled')}
+            className="flex items-center gap-1"
+          >
+            <XCircle className="h-4 w-4" />
+            Cancel
+          </Button>
+        </div>
+      )}
+
+      {/* Remarks Dialog */}
+      <Dialog open={isRemarksDialogOpen} onOpenChange={setIsRemarksDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              {pendingStatus === 'completed' ? 'Complete Task' : 'Cancel Task'}
+            </DialogTitle>
+            <DialogDescription>
+              Add remarks about this task (optional)
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="remarks">Remarks</Label>
+              <Textarea
+                id="remarks"
+                placeholder="Enter any comments or remarks about this task..."
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                rows={4}
+              />
+            </div>
+            
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsRemarksDialogOpen(false);
+                  setRemarks('');
+                  setPendingStatus(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => pendingStatus && handleStatusChange(pendingStatus)}
+                className={pendingStatus === 'completed' ? 'bg-green-600 hover:bg-green-700' : ''}
+                variant={pendingStatus === 'completed' ? 'default' : 'destructive'}
+              >
+                {pendingStatus === 'completed' ? 'Complete Task' : 'Cancel Task'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+};
+
+export default PersonalTaskCard;

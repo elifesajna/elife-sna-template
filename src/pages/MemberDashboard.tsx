@@ -4,10 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { User, Users, Calendar, Clock, MapPin, Phone, Mail, LogOut, Home } from "lucide-react";
+import { User, Users, Calendar, Clock, MapPin, Phone, Mail, LogOut, Home, CheckCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import PersonalTaskCard from "@/components/PersonalTaskCard";
 
 interface Task {
   id: string;
@@ -164,6 +165,9 @@ export default function MemberDashboard() {
     }
   };
 
+  const pendingPersonalTasks = personalTasks.filter(task => task.status === 'pending');
+  const completedPersonalTasks = personalTasks.filter(task => task.status === 'completed');
+
   if (!memberUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -260,11 +264,15 @@ export default function MemberDashboard() {
         </Card>
 
         {/* Dashboard Tabs */}
-        <Tabs defaultValue="personal" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="personal" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Personal Tasks
+        <Tabs defaultValue="pending" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="pending" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Pending Tasks ({pendingPersonalTasks.length})
+            </TabsTrigger>
+            <TabsTrigger value="completed" className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              Completed Tasks ({completedPersonalTasks.length})
             </TabsTrigger>
             <TabsTrigger value="team" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -272,50 +280,55 @@ export default function MemberDashboard() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="personal" className="mt-6">
+          <TabsContent value="pending" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Personal Tasks</CardTitle>
+                <CardTitle>Pending Personal Tasks</CardTitle>
                 <CardDescription>
-                  Tasks specifically assigned to your mobile number
+                  Tasks specifically assigned to you that need attention
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {personalTasks.length === 0 ? (
+                {pendingPersonalTasks.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
-                    No personal tasks found.
+                    No pending personal tasks found.
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {personalTasks.map((task) => (
-                      <div key={task.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-semibold text-lg">{task.title}</h3>
-                          <div className="flex gap-2">
-                            <Badge className={getStatusColor(task.status)}>
-                              {task.status.replace('_', ' ')}
-                            </Badge>
-                            <Badge className={getPriorityColor(task.priority)}>
-                              {task.priority}
-                            </Badge>
-                          </div>
-                        </div>
-                        {task.description && (
-                          <p className="text-gray-600 mb-3">{task.description}</p>
-                        )}
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
-                          </div>
-                          {task.due_date && (
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
-                              <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                    {pendingPersonalTasks.map((task) => (
+                      <PersonalTaskCard 
+                        key={task.id} 
+                        task={task} 
+                        onTaskUpdate={() => fetchData(memberUser)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="completed" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Completed Personal Tasks</CardTitle>
+                <CardDescription>
+                  Your completed tasks with completion details
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {completedPersonalTasks.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No completed personal tasks found.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {completedPersonalTasks.map((task) => (
+                      <PersonalTaskCard 
+                        key={task.id} 
+                        task={task} 
+                        onTaskUpdate={() => fetchData(memberUser)}
+                      />
                     ))}
                   </div>
                 )}
