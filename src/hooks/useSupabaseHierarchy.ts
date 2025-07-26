@@ -43,10 +43,20 @@ export const useSupabaseHierarchy = (filterPanchayathId?: string) => {
     try {
       setIsLoading(true);
       
-      // Check if user is a guest or member with panchayath restriction
+      // Check if user is a guest, member, or admin with potential restrictions
       const guestUser = localStorage.getItem('guest_user');
       const memberUser = localStorage.getItem('member_user');
+      const adminUser = localStorage.getItem('adminUser') || localStorage.getItem('admin_user');
       let panchayathFilter = filterPanchayathId;
+      
+      // Admin users (super admin or admin) should see all data without restrictions
+      if (adminUser) {
+        const userData = JSON.parse(adminUser);
+        if (userData.role === 'super_admin' || userData.role === 'admin') {
+          // Remove any panchayath filtering for admins
+          panchayathFilter = undefined;
+        }
+      }
       
       if (guestUser && !filterPanchayathId) {
         const userData = JSON.parse(guestUser);

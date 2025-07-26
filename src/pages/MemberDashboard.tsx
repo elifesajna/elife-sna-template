@@ -57,23 +57,40 @@ export default function MemberDashboard() {
     try {
       setLoading(true);
 
-      // Fetch personal tasks (tasks assigned to this mobile number)
-      const { data: personalTasksData, error: personalError } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('allocated_to_agent', user.mobileNumber)
-        .order('created_at', { ascending: false });
-
-      if (personalError) throw personalError;
-      setPersonalTasks(personalTasksData || []);
-
-      // Check team memberships for this agent
-      // Note: Since member user structure might not have agentId, we need to look up the agent first
+      // First get agent data, then fetch personal tasks
       const { data: agentData, error: agentError } = await supabase
         .from('agents')
         .select('id')
         .eq('phone', user.mobileNumber)
-        .single();
+        .maybeSingle();
+
+      let personalTasksData = [];
+      if (agentData && !agentError) {
+        // Fetch personal tasks (tasks assigned to this agent ID)
+        const { data: tasksData, error: personalError } = await supabase
+          .from('tasks')
+          .select('*')
+          .eq('allocated_to_agent', agentData.id)
+          .order('created_at', { ascending: false });
+
+        if (personalError) throw personalError;
+        personalTasksData = tasksData || [];
+      } else {
+        // Also try with mobile number as fallback
+        const { data: tasksData, error: personalError } = await supabase
+          .from('tasks')
+          .select('*')
+          .eq('allocated_to_agent', user.mobileNumber)
+          .order('created_at', { ascending: false });
+
+        if (!personalError) {
+          personalTasksData = tasksData || [];
+        }
+      }
+
+      setPersonalTasks(personalTasksData || []);
+
+      // Check team memberships for this agent (reuse agentData from above)
 
       let teamMemberData = [];
       if (agentData && !agentError) {

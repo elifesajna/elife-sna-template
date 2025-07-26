@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Building2, Plus, Users, Edit, Trash2, UserPlus } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { AddMemberForm } from './AddMemberForm';
 
 interface Team {
   id: string;
@@ -53,14 +54,6 @@ const TeamManagement = () => {
   const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [selectedTeamForMembers, setSelectedTeamForMembers] = useState<string>('');
-  const [selectedAgent, setSelectedAgent] = useState<string>('');
-  const [searchAgent, setSearchAgent] = useState('');
-  const [selectedTeam, setSelectedTeam] = useState('');
-  const [manualMemberData, setManualMemberData] = useState({
-    name: '',
-    phone: '',
-    panchayath_id: '',
-  });
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -257,73 +250,6 @@ const TeamManagement = () => {
   const handleAddMember = async (teamId: string) => {
     setSelectedTeamForMembers(teamId);
     setIsMemberDialogOpen(true);
-  };
-
-  const handleMemberSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      let agentId = selectedAgent;
-      
-      // If no agent selected, create a manual member
-      if (!selectedAgent && manualMemberData.name) {
-        const { data: newAgent, error: agentError } = await supabase
-          .from('agents')
-          .insert({
-            name: manualMemberData.name,
-            phone: manualMemberData.phone,
-            role: 'coordinator',
-            panchayath_id: manualMemberData.panchayath_id || panchayaths[0]?.id || '',
-          })
-          .select()
-          .single();
-
-        if (agentError) throw agentError;
-        agentId = newAgent.id;
-      }
-
-      if (!agentId) {
-        toast({
-          title: "Error",
-          description: "Please select an agent or provide manual details",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Add member to team
-      const teamId = selectedTeam || selectedTeamForMembers;
-      const { error } = await supabase
-        .from('management_team_members')
-        .insert([{
-          team_id: teamId,
-          agent_id: agentId,
-        }]);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Team member added successfully",
-      });
-
-      setIsMemberDialogOpen(false);
-      setSelectedAgent('');
-      setSearchAgent('');
-      setSelectedTeam('');
-      setManualMemberData({
-        name: '',
-        phone: '',
-        panchayath_id: '',
-      });
-    } catch (error) {
-      console.error('Error adding member:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add team member",
-        variant: "destructive",
-      });
-    }
   };
 
   const handleRemoveMember = async (memberId: string) => {
@@ -529,124 +455,12 @@ const TeamManagement = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isMemberDialogOpen} onOpenChange={setIsMemberDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Team Member</DialogTitle>
-            <DialogDescription>
-              Select an existing agent or add a new member manually
-            </DialogDescription>
-          </DialogHeader>
-          
-          <form onSubmit={handleMemberSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="existing-agent">Select Existing Agent</Label>
-              <div className="max-h-48 overflow-y-auto border rounded-md">
-                <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Search and select an agent..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <div className="p-2">
-                      <Input
-                        placeholder="Search by name or mobile..."
-                        value={searchAgent}
-                        onChange={(e) => setSearchAgent(e.target.value)}
-                        className="mb-2"
-                      />
-                    </div>
-                    <div className="max-h-40 overflow-y-auto">
-                      {agents
-                        .filter(agent => 
-                          agent.name.toLowerCase().includes(searchAgent.toLowerCase()) ||
-                          (agent.phone && agent.phone.includes(searchAgent))
-                        )
-                        .map((agent) => (
-                        <SelectItem key={agent.id} value={agent.id}>
-                          {agent.name} - {agent.role} ({agent.phone || 'No phone'})
-                        </SelectItem>
-                      ))}
-                    </div>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="team-select">Select Team (Optional)</Label>
-              <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a team" />
-                </SelectTrigger>
-                <SelectContent>
-                  {teams.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="text-center text-sm text-gray-500 my-4">
-              OR
-            </div>
-
-            <div className="space-y-4 border-t pt-4">
-              <div className="text-sm font-medium">Add New Member Manually</div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="manual-name">Name</Label>
-                <Input
-                  id="manual-name"
-                  value={manualMemberData.name}
-                  onChange={(e) => setManualMemberData({ ...manualMemberData, name: e.target.value })}
-                  placeholder="Enter member name"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="manual-phone">Phone</Label>
-                <Input
-                  id="manual-phone"
-                  value={manualMemberData.phone}
-                  onChange={(e) => setManualMemberData({ ...manualMemberData, phone: e.target.value })}
-                  placeholder="Enter phone number"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="manual-panchayath">Panchayath</Label>
-                <Select 
-                  value={manualMemberData.panchayath_id} 
-                  onValueChange={(value) => setManualMemberData({ ...manualMemberData, panchayath_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select panchayath" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {panchayaths.map((panchayath) => (
-                      <SelectItem key={panchayath.id} value={panchayath.id}>
-                        {panchayath.name} {panchayath.district && `- ${panchayath.district}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-            </div>
-
-            <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={() => setIsMemberDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">
-                Add Member
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <AddMemberForm
+        isOpen={isMemberDialogOpen}
+        onClose={() => setIsMemberDialogOpen(false)}
+        selectedTeamId={selectedTeamForMembers}
+        onMemberAdded={fetchData}
+      />
     </div>
   );
 };
