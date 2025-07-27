@@ -11,7 +11,7 @@ import { AdminDashboard } from "@/components/AdminDashboard";
 import UserManagement from "@/components/UserManagement";
 import MemberApprovals from "@/components/MemberApprovals";
 import TeamManagement from "@/components/TeamManagement";
-import TaskManagement from "@/components/TaskManagement";
+import EnhancedTaskManagement from "@/components/EnhancedTaskManagement";
 import PanchayathManagement from "@/components/PanchayathManagement";
 import AdminPermissions from "@/components/AdminPermissions";
 import AdminReports from "@/components/AdminReports";
@@ -83,7 +83,7 @@ const AdminPanelContent = () => {
               <Route path="/users" element={<UserManagement />} />
               <Route path="/approvals" element={<MemberApprovals />} />
               <Route path="/teams" element={<TeamManagement />} />
-              <Route path="/tasks" element={<TaskManagement />} />
+              <Route path="/tasks" element={<EnhancedTaskManagement />} />
               <Route path="/panchayaths" element={<PanchayathManagement />} />
               <Route path="/permissions" element={<AdminPermissions />} />
               <Route path="/reports" element={<AdminReports />} />

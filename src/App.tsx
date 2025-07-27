@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import Index from './pages/Index';
 import AddAgents from './pages/AddAgents';
 import ViewHierarchy from './pages/ViewHierarchy';
-import TaskManagement from './pages/TaskManagement';
+
 import PanchayathNotes from './pages/PanchayathNotes';
 import NotFound from './pages/NotFound';
 
@@ -36,7 +36,7 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/add-agents" element={<AddAgents />} />
               <Route path="/view-hierarchy" element={<ViewHierarchy />} />
-              <Route path="/task-management" element={<TaskManagement />} />
+              
               <Route path="/panchayath-notes" element={<PanchayathNotes />} />
               <Route path="/admin/*" element={<AdminPanel />} />
               <Route path="/members" element={<MembersLogin />} />
