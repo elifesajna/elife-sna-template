@@ -205,33 +205,35 @@ export default function MemberDashboard() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 gap-4 sm:gap-0">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">Member Dashboard</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Member Dashboard</h1>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-gray-600" />
-                <span className="font-medium text-gray-900">{memberUser.name}</span>
-                <Badge variant="secondary">{memberUser.agent?.role}</Badge>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
+              <div className="flex items-center gap-2 flex-wrap">
+                <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
+                <span className="font-medium text-gray-900 text-sm sm:text-base">{memberUser.name}</span>
+                <Badge variant="secondary" className="text-xs">{memberUser.agent?.role}</Badge>
               </div>
-              <Link to="/">
-                <Button variant="ghost" size="sm">
-                  <Home className="h-4 w-4 mr-2" />
-                  Home
+              <div className="flex items-center gap-2">
+                <Link to="/">
+                  <Button variant="ghost" size="sm" className="text-xs sm:text-sm">
+                    <Home className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    Home
+                  </Button>
+                </Link>
+                <Button variant="outline" size="sm" onClick={handleLogout} className="text-xs sm:text-sm">
+                  <LogOut className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  Logout
                 </Button>
-              </Link>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* User Info Card */}
         <Card className="mb-8">
           <CardHeader>
@@ -243,7 +245,7 @@ export default function MemberDashboard() {
           <CardContent>
             <div className="space-y-6">
               {/* Basic Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-gray-500" />
                   <span className="text-sm text-gray-600">Mobile:</span>
@@ -270,7 +272,7 @@ export default function MemberDashboard() {
                   <Calendar className="h-4 w-4" />
                   Task Summary
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="bg-yellow-50 p-3 rounded-lg">
                     <div className="text-sm text-yellow-600">Pending Personal Tasks</div>
                     <div className="text-2xl font-bold text-yellow-800">{pendingPersonalTasks.length}</div>
@@ -291,27 +293,31 @@ export default function MemberDashboard() {
 
         {/* Dashboard Tabs */}
         <Tabs defaultValue="personal" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="personal" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Personal Tasks
+          <TabsList className="grid w-full grid-cols-2 h-auto p-1">
+            <TabsTrigger value="personal" className="flex items-center gap-2 text-xs sm:text-sm py-2 sm:py-3">
+              <User className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Personal Tasks</span>
+              <span className="sm:hidden">Personal</span>
             </TabsTrigger>
-            <TabsTrigger value="team" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Team Tasks
+            <TabsTrigger value="team" className="flex items-center gap-2 text-xs sm:text-sm py-2 sm:py-3">
+              <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Team Tasks</span>
+              <span className="sm:hidden">Team</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="personal" className="mt-6">
+          <TabsContent value="personal" className="mt-4 sm:mt-6">
             <Tabs defaultValue="pending" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="pending" className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Pending ({pendingPersonalTasks.length})
+              <TabsList className="grid w-full grid-cols-2 h-auto p-1">
+                <TabsTrigger value="pending" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
+                  <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Pending ({pendingPersonalTasks.length})</span>
+                  <span className="sm:hidden">Pending ({pendingPersonalTasks.length})</span>
                 </TabsTrigger>
-                <TabsTrigger value="completed" className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4" />
-                  Completed ({completedPersonalTasks.length})
+                <TabsTrigger value="completed" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
+                  <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Completed ({completedPersonalTasks.length})</span>
+                  <span className="sm:hidden">Done ({completedPersonalTasks.length})</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -373,7 +379,7 @@ export default function MemberDashboard() {
             </Tabs>
           </TabsContent>
 
-          <TabsContent value="team" className="mt-6">
+          <TabsContent value="team" className="mt-4 sm:mt-6">
             <Card>
               <CardHeader>
                 <CardTitle>Team Tasks</CardTitle>
