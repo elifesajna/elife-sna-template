@@ -140,6 +140,8 @@ const EnhancedTaskManagement = () => {
     return true;
   });
 
+  const expiredTasks = tasks.filter(task => isExpired(task.due_date));
+
   if (loading) {
     return (
       <div className="p-6">
@@ -189,7 +191,7 @@ const EnhancedTaskManagement = () => {
           </div>
 
           <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="all">All Tasks</TabsTrigger>
               <TabsTrigger value="pending" className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
@@ -202,6 +204,10 @@ const EnhancedTaskManagement = () => {
               <TabsTrigger value="cancelled" className="flex items-center gap-2">
                 <XCircle className="h-4 w-4" />
                 Cancelled
+              </TabsTrigger>
+              <TabsTrigger value="expired" className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                Expired ({expiredTasks.length})
               </TabsTrigger>
             </TabsList>
             
@@ -285,7 +291,6 @@ const EnhancedTaskManagement = () => {
               </Table>
             </TabsContent>
             
-            {/* Similar content for other tabs with filtered data */}
             <TabsContent value="pending" className="mt-6">
               <Table>
                 <TableHeader>
@@ -381,6 +386,80 @@ const EnhancedTaskManagement = () => {
                       </TableCell>
                     </TableRow>
                   ))}
+                </TableBody>
+              </Table>
+            </TabsContent>
+
+            <TabsContent value="expired" className="mt-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Assigned To</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead>Days Overdue</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {expiredTasks.map((task) => {
+                    const daysOverdue = task.due_date ? Math.floor((new Date().getTime() - new Date(task.due_date).getTime()) / (1000 * 60 * 60 * 24)) : 0;
+                    return (
+                      <TableRow key={task.id} className="bg-red-50">
+                        <TableCell className="font-medium text-red-800">
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-red-500" />
+                            {task.title}
+                          </div>
+                        </TableCell>
+                        <TableCell>{task.agents?.name || task.management_teams?.name}</TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(task.status)}>
+                            {task.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getPriorityColor(task.priority)}>
+                            {task.priority}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-red-600">
+                          {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}
+                        </TableCell>
+                        <TableCell className="text-red-600 font-medium">
+                          {daysOverdue} days
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" variant="ghost" onClick={() => handleViewDetails(task)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {task.status === 'pending' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  onClick={() => handleStatusChange(task.id, 'completed')}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleStatusChange(task.id, 'cancelled')}
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </TabsContent>
