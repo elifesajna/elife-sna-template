@@ -129,6 +129,26 @@ const MemberApprovals = () => {
   const handleDelete = async (registrationId: string) => {
     try {
       console.log('Deleting registration:', registrationId);
+      
+      // First, check if the record exists
+      const { data: existingRecord, error: checkError } = await supabase
+        .from('user_registration_requests')
+        .select('id, username, mobile_number')
+        .eq('id', registrationId)
+        .single();
+
+      if (checkError || !existingRecord) {
+        console.error('Record not found or error checking:', checkError);
+        toast({
+          title: "Error",
+          description: "Registration record not found",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Found record to delete:', existingRecord);
+
       const { error } = await supabase
         .from('user_registration_requests')
         .delete()
@@ -139,6 +159,7 @@ const MemberApprovals = () => {
         throw error;
       }
 
+      console.log('Delete successful');
       toast({
         title: "Success",
         description: "Member registration deleted successfully",
@@ -146,12 +167,14 @@ const MemberApprovals = () => {
       
       setIsDeleteDialogOpen(false);
       setDeletingId(null);
-      fetchRegistrations(); // Refresh the list
+      
+      // Force refresh the list
+      await fetchRegistrations();
     } catch (error) {
       console.error('Error deleting registration:', error);
       toast({
         title: "Error",
-        description: "Failed to delete member registration",
+        description: `Failed to delete member registration: ${error.message}`,
         variant: "destructive",
       });
     }
