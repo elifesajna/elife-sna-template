@@ -52,9 +52,9 @@ export const AddMemberForm = ({ isOpen, onClose, selectedTeamId, onMemberAdded }
   const [newMemberData, setNewMemberData] = useState({
     name: '',
     phone: '',
-    email: '',
     role: 'pro' as Agent['role'],
     panchayath_id: '',
+    team_id: '',
   });
 
   const { toast } = useToast();
@@ -110,7 +110,6 @@ export const AddMemberForm = ({ isOpen, onClose, selectedTeamId, onMemberAdded }
           .insert({
             name: newMemberData.name,
             phone: newMemberData.phone,
-            email: newMemberData.email,
             role: newMemberData.role,
             panchayath_id: newMemberData.panchayath_id || panchayaths[0]?.id || '',
           })
@@ -135,7 +134,8 @@ export const AddMemberForm = ({ isOpen, onClose, selectedTeamId, onMemberAdded }
         return;
       }
 
-      if (!selectedTeam) {
+      const teamToUse = activeTab === 'new' ? newMemberData.team_id : selectedTeam;
+      if (!teamToUse) {
         toast({
           title: "Error",
           description: "Please select a team",
@@ -148,7 +148,7 @@ export const AddMemberForm = ({ isOpen, onClose, selectedTeamId, onMemberAdded }
       const { error } = await supabase
         .from('management_team_members')
         .insert([{
-          team_id: selectedTeam,
+          team_id: teamToUse,
           agent_id: agentId,
         }]);
 
@@ -180,9 +180,9 @@ export const AddMemberForm = ({ isOpen, onClose, selectedTeamId, onMemberAdded }
     setNewMemberData({
       name: '',
       phone: '',
-      email: '',
       role: 'pro',
       panchayath_id: '',
+      team_id: '',
     });
     setActiveTab('existing');
     onClose();
@@ -215,27 +215,27 @@ export const AddMemberForm = ({ isOpen, onClose, selectedTeamId, onMemberAdded }
             </TabsList>
             
             <form onSubmit={handleSubmit} className="space-y-6 mt-4">
-              {/* Team Selection */}
-              <div className="space-y-2">
-                <Label htmlFor="team-select">Select Team</Label>
-                <Select value={selectedTeam} onValueChange={setSelectedTeam} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a team" />
-                  </SelectTrigger>
-                  <SelectContent className="z-50">
-                    <div className="max-h-60 overflow-y-auto">
-                      {teams.map((team) => (
-                        <SelectItem key={team.id} value={team.id}>
-                          {team.name}
-                          {team.description && ` - ${team.description}`}
-                        </SelectItem>
-                      ))}
-                    </div>
-                  </SelectContent>
-                </Select>
-              </div>
-
               <TabsContent value="existing" className="space-y-4 mt-0">
+                {/* Team Selection for Existing Agent */}
+                <div className="space-y-2">
+                  <Label htmlFor="team-select">Select Team</Label>
+                  <Select value={selectedTeam} onValueChange={setSelectedTeam} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a team" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50">
+                      <div className="max-h-60 overflow-y-auto">
+                        {teams.map((team) => (
+                          <SelectItem key={team.id} value={team.id}>
+                            {team.name}
+                            {team.description && ` - ${team.description}`}
+                          </SelectItem>
+                        ))}
+                      </div>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg">Select Existing Agent</CardTitle>
@@ -251,7 +251,7 @@ export const AddMemberForm = ({ isOpen, onClose, selectedTeamId, onMemberAdded }
                           <SelectValue placeholder="Search and choose an agent..." />
                         </SelectTrigger>
                         <SelectContent className="z-50">
-                          <div className="p-2 border-b">
+                          <div className="p-2 border-b sticky top-0 bg-background">
                             <div className="relative">
                               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                               <Input
@@ -259,20 +259,27 @@ export const AddMemberForm = ({ isOpen, onClose, selectedTeamId, onMemberAdded }
                                 value={searchAgent}
                                 onChange={(e) => setSearchAgent(e.target.value)}
                                 className="pl-10"
+                                onClick={(e) => e.stopPropagation()}
                               />
                             </div>
                           </div>
                           <div className="max-h-60 overflow-y-auto">
-                            {filteredAgents.map((agent) => (
-                              <SelectItem key={agent.id} value={agent.id}>
-                                <div className="flex flex-col">
-                                  <span className="font-medium">{agent.name}</span>
-                                  <span className="text-sm text-gray-500">
-                                    {agent.role} • {agent.phone || 'No phone'} • {agent.email || 'No email'}
-                                  </span>
-                                </div>
-                              </SelectItem>
-                            ))}
+                            {filteredAgents.length === 0 ? (
+                              <div className="p-4 text-center text-gray-500">
+                                No agents found matching your search
+                              </div>
+                            ) : (
+                              filteredAgents.map((agent) => (
+                                <SelectItem key={agent.id} value={agent.id}>
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{agent.name}</span>
+                                    <span className="text-sm text-gray-500">
+                                      {agent.role} • {agent.phone || 'No phone'} • {agent.email || 'No email'}
+                                    </span>
+                                  </div>
+                                </SelectItem>
+                              ))
+                            )}
                           </div>
                         </SelectContent>
                       </Select>
@@ -313,30 +320,24 @@ export const AddMemberForm = ({ isOpen, onClose, selectedTeamId, onMemberAdded }
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="new-email">Email (Optional)</Label>
-                        <Input
-                          id="new-email"
-                          type="email"
-                          value={newMemberData.email}
-                          onChange={(e) => setNewMemberData({ ...newMemberData, email: e.target.value })}
-                          placeholder="Enter email address"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="new-role">Role</Label>
+                        <Label htmlFor="new-team">Select Team</Label>
                         <Select 
-                          value={newMemberData.role} 
-                          onValueChange={(value) => setNewMemberData({ ...newMemberData, role: value as Agent['role'] })}
+                          value={newMemberData.team_id} 
+                          onValueChange={(value) => setNewMemberData({ ...newMemberData, team_id: value })}
+                          required
                         >
                           <SelectTrigger>
-                            <SelectValue />
+                            <SelectValue placeholder="Choose a team" />
                           </SelectTrigger>
                           <SelectContent className="z-50">
-                            <SelectItem value="coordinator">Coordinator</SelectItem>
-                            <SelectItem value="supervisor">Supervisor</SelectItem>
-                            <SelectItem value="group-leader">Group Leader</SelectItem>
-                            <SelectItem value="pro">Pro</SelectItem>
+                            <div className="max-h-60 overflow-y-auto">
+                              {teams.map((team) => (
+                                <SelectItem key={team.id} value={team.id}>
+                                  {team.name}
+                                  {team.description && ` - ${team.description}`}
+                                </SelectItem>
+                              ))}
+                            </div>
                           </SelectContent>
                         </Select>
                       </div>
