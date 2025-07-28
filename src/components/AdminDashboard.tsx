@@ -73,7 +73,7 @@ export const AdminDashboard = () => {
   const fetchDashboardStats = async () => {
     try {
       const [usersResult, teamsResult, tasksResult, approvalsResult, panchayathsResult] = await Promise.all([
-        supabase.from('user_profiles').select('id', { count: 'exact' }),
+        supabase.from('agents').select('id', { count: 'exact' }),
         supabase.from('management_teams').select('id', { count: 'exact' }),
         supabase.from('tasks').select('id', { count: 'exact' }),
         supabase.from('user_registration_requests').select('id', { count: 'exact' }).eq('status', 'pending'),
