@@ -110,7 +110,7 @@ export const AddMemberForm = ({ isOpen, onClose, selectedTeamId, onMemberAdded }
           .insert({
             name: newMemberData.name,
             phone: newMemberData.phone,
-            role: newMemberData.role,
+            role: 'pro', // Set role as 'pro' for new team members
             panchayath_id: newMemberData.panchayath_id || panchayaths[0]?.id || '',
           })
           .select()
@@ -121,7 +121,7 @@ export const AddMemberForm = ({ isOpen, onClose, selectedTeamId, onMemberAdded }
 
         toast({
           title: "Success",
-          description: "New agent created successfully",
+          description: "New team member created successfully",
         });
       }
 
@@ -245,28 +245,30 @@ export const AddMemberForm = ({ isOpen, onClose, selectedTeamId, onMemberAdded }
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
+                      <Label htmlFor="search-agent">Search Agent</Label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="search-agent"
+                          placeholder="Search by name or mobile number..."
+                          value={searchAgent}
+                          onChange={(e) => setSearchAgent(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
                       <Label htmlFor="agent-select">Select Agent</Label>
                       <Select value={selectedAgent} onValueChange={setSelectedAgent} required>
                         <SelectTrigger>
-                          <SelectValue placeholder="Search and choose an agent..." />
+                          <SelectValue placeholder="Choose an agent..." />
                         </SelectTrigger>
-                        <SelectContent className="z-50">
-                          <div className="p-2 border-b sticky top-0 bg-background">
-                            <div className="relative">
-                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                              <Input
-                                placeholder="Search by name or mobile number..."
-                                value={searchAgent}
-                                onChange={(e) => setSearchAgent(e.target.value)}
-                                className="pl-10"
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            </div>
-                          </div>
+                        <SelectContent className="z-50 bg-background">
                           <div className="max-h-60 overflow-y-auto">
                             {filteredAgents.length === 0 ? (
                               <div className="p-4 text-center text-gray-500">
-                                No agents found matching your search
+                                {searchAgent ? 'No agents found matching your search' : 'No agents available'}
                               </div>
                             ) : (
                               filteredAgents.map((agent) => (
