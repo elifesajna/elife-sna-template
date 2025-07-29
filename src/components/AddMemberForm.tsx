@@ -255,7 +255,7 @@ export const AddMemberForm = ({ isOpen, onClose, selectedTeamId, onMemberAdded }
                             <div className="relative">
                               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                               <Input
-                                placeholder="Search by name, phone, or email..."
+                                placeholder="Search by name or mobile number..."
                                 value={searchAgent}
                                 onChange={(e) => setSearchAgent(e.target.value)}
                                 className="pl-10"
@@ -274,7 +274,7 @@ export const AddMemberForm = ({ isOpen, onClose, selectedTeamId, onMemberAdded }
                                   <div className="flex flex-col">
                                     <span className="font-medium">{agent.name}</span>
                                     <span className="text-sm text-gray-500">
-                                      {agent.role} • {agent.phone || 'No phone'} • {agent.email || 'No email'}
+                                      {agent.role} + team member • {agent.phone || 'No phone'}
                                     </span>
                                   </div>
                                 </SelectItem>
