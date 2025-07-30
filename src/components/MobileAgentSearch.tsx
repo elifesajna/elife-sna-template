@@ -99,7 +99,7 @@ export const MobileAgentSearch = ({ onAgentSelect, selectedAgentId }: MobileAgen
         />
         <Button onClick={searchAgent} disabled={isSearching} size="sm">
           <Search className="h-4 w-4 mr-1" />
-          {isSearching ? "Searching..." : "Search"}
+          {isSearching ? "Searching..." : "Find"}
         </Button>
       </div>
 
