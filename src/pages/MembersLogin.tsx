@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -10,19 +10,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { MobileAgentSearch } from "@/components/MobileAgentSearch";
-
-interface Agent {
-  id: string;
-  name: string;
-  phone: string;
-  role: string;
-  panchayath_id: string;
-  panchayaths?: {
-    name: string;
-    district: string;
-    state: string;
-  };
-}
 
 export default function MembersLogin() {
   const [loginData, setLoginData] = useState({
@@ -47,7 +34,7 @@ export default function MembersLogin() {
     setIsLoggingIn(true);
     
     try {
-      // Check if member exists and is approved (using user_registration_requests table for now)
+      // Check if member exists and is approved
       const { data, error } = await supabase
         .from('user_registration_requests')
         .select('*, panchayaths(name, district, state)')
@@ -107,7 +94,7 @@ export default function MembersLogin() {
     if (!registrationData.selectedAgentId) {
       toast({
         title: "Error",
-        description: "Please select an agent from the list",
+        description: "Please search and select an agent by mobile number",
         variant: "destructive"
       });
       setIsRegistering(false);
@@ -144,7 +131,7 @@ export default function MembersLogin() {
         return;
       }
 
-      // Create member registration using user_registration_requests table
+      // Create member registration
       const { error } = await supabase
         .from('user_registration_requests')
         .insert([{
