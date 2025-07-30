@@ -295,10 +295,11 @@ const TeamTaskCard: React.FC<TeamTaskCardProps> = ({ task, onTaskUpdate, canModi
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
-              {pendingStatus === 'completed' ? 'Complete Team Task' : 'Cancel Team Task'}
+              {pendingStatus === 'completed' ? 'Complete Team Task' : 
+               pendingStatus === 'cancelled' ? 'Cancel Team Task' : 'Add Remark'}
             </DialogTitle>
             <DialogDescription>
-              Add remarks about this team task (optional)
+              {pendingStatus ? 'Add remarks about this team task (optional)' : 'Add a remark to this team task'}
             </DialogDescription>
           </DialogHeader>
           
@@ -334,7 +335,10 @@ const TeamTaskCard: React.FC<TeamTaskCardProps> = ({ task, onTaskUpdate, canModi
                   {pendingStatus === 'completed' ? 'Complete Task' : 'Cancel Task'}
                 </Button>
               ) : (
-                <Button onClick={handleAddRemark}>
+                <Button 
+                  onClick={handleAddRemark}
+                  disabled={!remarks.trim()}
+                >
                   Add Remark
                 </Button>
               )}

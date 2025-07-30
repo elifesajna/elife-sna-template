@@ -110,6 +110,39 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({ task, onTaskUpdate 
     }
   };
 
+  const handleAddRemark = async () => {
+    if (!remarks.trim()) return;
+    
+    try {
+      const { error } = await supabase
+        .from('task_remarks')
+        .insert({
+          task_id: task.id,
+          remark: remarks.trim(),
+          status: task.status,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Remark added successfully",
+      });
+      
+      setIsRemarksDialogOpen(false);
+      setRemarks('');
+      fetchTaskRemarks();
+    } catch (error) {
+      console.error('Error adding remark:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add remark",
+        variant: "destructive",
+      });
+    }
+  };
+
   const openRemarksDialog = (status: 'completed' | 'cancelled') => {
     setPendingStatus(status);
     setIsRemarksDialogOpen(true);
@@ -167,7 +200,7 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({ task, onTaskUpdate 
         )}
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <Button
           size="sm"
           variant="ghost"
@@ -176,6 +209,20 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({ task, onTaskUpdate 
         >
           <Eye className="h-4 w-4" />
           View Remarks
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            setRemarks('');
+            setPendingStatus(null);
+            setIsRemarksDialogOpen(true);
+          }}
+          className="flex items-center gap-1"
+        >
+          <MessageSquare className="h-4 w-4" />
+          Add Remark
         </Button>
         
         {task.status === 'pending' && (
@@ -208,10 +255,11 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({ task, onTaskUpdate 
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
-              {pendingStatus === 'completed' ? 'Complete Task' : 'Cancel Task'}
+              {pendingStatus === 'completed' ? 'Complete Task' : 
+               pendingStatus === 'cancelled' ? 'Cancel Task' : 'Add Remark'}
             </DialogTitle>
             <DialogDescription>
-              Add remarks about this task (optional)
+              {pendingStatus ? 'Add remarks about this task (optional)' : 'Add a remark to this task'}
             </DialogDescription>
           </DialogHeader>
           
@@ -238,13 +286,22 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({ task, onTaskUpdate 
               >
                 Cancel
               </Button>
-              <Button
-                onClick={() => pendingStatus && handleStatusChange(pendingStatus)}
-                className={pendingStatus === 'completed' ? 'bg-green-600 hover:bg-green-700' : ''}
-                variant={pendingStatus === 'completed' ? 'default' : 'destructive'}
-              >
-                {pendingStatus === 'completed' ? 'Complete Task' : 'Cancel Task'}
-              </Button>
+              {pendingStatus ? (
+                <Button
+                  onClick={() => pendingStatus && handleStatusChange(pendingStatus)}
+                  className={pendingStatus === 'completed' ? 'bg-green-600 hover:bg-green-700' : ''}
+                  variant={pendingStatus === 'completed' ? 'default' : 'destructive'}
+                >
+                  {pendingStatus === 'completed' ? 'Complete Task' : 'Cancel Task'}
+                </Button>
+              ) : (
+                <Button 
+                  onClick={handleAddRemark}
+                  disabled={!remarks.trim()}
+                >
+                  Add Remark
+                </Button>
+              )}
             </div>
           </div>
         </DialogContent>
