@@ -4,12 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, LogIn, UserPlus, Phone, User, AlertCircle, CheckCircle, Search } from "lucide-react";
+import { ArrowLeft, LogIn, UserPlus, Phone, User, AlertCircle, CheckCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { MobileAgentSearch } from "@/components/MobileAgentSearch";
 
 interface Agent {
   id: string;
@@ -30,58 +30,16 @@ export default function MembersLogin() {
     mobileNumber: ''
   });
   const [registrationData, setRegistrationData] = useState({
-    selectedAgentId: '',
-    searchTerm: ''
+    selectedAgentId: ''
   });
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [filteredAgents, setFilteredAgents] = useState<Agent[]>([]);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [loginStatus, setLoginStatus] = useState<'idle' | 'success' | 'pending' | 'rejected'>('idle');
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchAgents();
-  }, []);
-
-  useEffect(() => {
-    if (registrationData.searchTerm) {
-      const filtered = agents.filter(agent => 
-        agent.name.toLowerCase().includes(registrationData.searchTerm.toLowerCase()) ||
-        agent.phone.includes(registrationData.searchTerm)
-      );
-      setFilteredAgents(filtered);
-    } else {
-      setFilteredAgents(agents);
-    }
-  }, [registrationData.searchTerm, agents]);
-
-  const fetchAgents = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('agents')
-        .select(`
-          id,
-          name,
-          phone,
-          role,
-          panchayath_id,
-          panchayaths(name, district, state)
-        `)
-        .order('name');
-
-      if (error) throw error;
-      setAgents(data || []);
-      setFilteredAgents(data || []);
-    } catch (error) {
-      console.error('Error fetching agents:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch agents",
-        variant: "destructive",
-      });
-    }
+  const handleAgentSelect = (agentId: string) => {
+    setRegistrationData({ selectedAgentId: agentId });
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -157,8 +115,14 @@ export default function MembersLogin() {
     }
 
     try {
-      const selectedAgent = agents.find(a => a.id === registrationData.selectedAgentId);
-      if (!selectedAgent) {
+      // Get selected agent data from database
+      const { data: selectedAgent, error: agentError } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('id', registrationData.selectedAgentId)
+        .single();
+
+      if (agentError || !selectedAgent) {
         throw new Error('Selected agent not found');
       }
 
@@ -197,7 +161,7 @@ export default function MembersLogin() {
         description: "Registration submitted successfully. Please wait for admin approval.",
       });
 
-      setRegistrationData({ selectedAgentId: '', searchTerm: '' });
+      setRegistrationData({ selectedAgentId: '' });
     } catch (error) {
       console.error('Registration error:', error);
       toast({
@@ -326,49 +290,15 @@ export default function MembersLogin() {
               <CardHeader className="text-center">
                 <CardTitle>Member Registration</CardTitle>
                 <CardDescription>
-                  Select your details from the agents hierarchy
+                  Find your profile by mobile number from the agents hierarchy
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleRegistration} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="search">Search Agent</Label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="search"
-                        type="text"
-                        placeholder="Search by name or mobile number"
-                        value={registrationData.searchTerm}
-                        onChange={(e) => setRegistrationData(prev => ({ ...prev, searchTerm: e.target.value }))}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="agent-select">Select Agent</Label>
-                    <Select 
-                      value={registrationData.selectedAgentId} 
-                      onValueChange={(value) => setRegistrationData(prev => ({ ...prev, selectedAgentId: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose your agent profile" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        {filteredAgents.map((agent) => (
-                          <SelectItem key={agent.id} value={agent.id}>
-                            <div className="flex flex-col">
-                              <span className="font-medium">{agent.name}</span>
-                              <span className="text-xs text-gray-500">
-                                {agent.phone} • {agent.role} • {agent.panchayaths?.name}
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <MobileAgentSearch 
+                    onAgentSelect={handleAgentSelect}
+                    selectedAgentId={registrationData.selectedAgentId}
+                  />
 
                   <Button type="submit" className="w-full" disabled={isRegistering}>
                     {isRegistering ? "Registering..." : "Register"}
