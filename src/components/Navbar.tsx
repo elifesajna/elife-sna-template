@@ -1,13 +1,21 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Settings, UserPlus, Users, Home, LogOut, User } from "lucide-react";
+import { Settings, UserPlus, Users, Home, LogOut, User, Menu } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const isMobile = useIsMobile();
   
   // Check for member user
   const [memberUser, setMemberUser] = React.useState(null);
@@ -31,6 +39,63 @@ export const Navbar = () => {
       navigate('/');
     }
   };
+
+  if (isMobile) {
+    return (
+      <nav className="bg-white shadow-md border-b sticky top-0 z-50">
+        <div className="max-w-full mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <Link to="/" className="text-base font-bold text-gray-900 hover:text-gray-700 truncate flex-1 mr-2">
+              🏛️ Panchayath System
+            </Link>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="px-2">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link to="/" className="flex items-center gap-2 w-full">
+                    <Home className="h-4 w-4" />
+                    Home
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/dashboard" className="flex items-center gap-2 w-full">
+                    <Settings className="h-4 w-4" />
+                    Admin Panel
+                  </Link>
+                </DropdownMenuItem>
+                {memberUser ? (
+                  <DropdownMenuItem asChild>
+                    <Link to="/member-dashboard" className="flex items-center gap-2 w-full">
+                      <User className="h-4 w-4" />
+                      Member Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem asChild>
+                    <Link to="/members" className="flex items-center gap-2 w-full">
+                      <Users className="h-4 w-4" />
+                      Members
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                {(user || memberUser) && (
+                  <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <nav className="bg-white shadow-md border-b sticky top-0 z-50">

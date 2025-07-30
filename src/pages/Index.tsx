@@ -34,13 +34,13 @@ const Index = () => {
       
       {/* Header */}
       <header className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
-        <div className="max-w-6xl mx-auto py-12 px-6 bg-cyan-950">
-          <h1 className="text-4xl font-bold mb-4">
+        <div className="max-w-6xl mx-auto py-8 md:py-12 px-4 md:px-6 bg-cyan-950">
+          <h1 className="text-2xl md:text-4xl font-bold mb-4">
             {adminUser ? `Welcome Admin, ${adminUser.username}` : 
              memberUser ? `Welcome, ${memberUser.name}` : 
              'Welcome to Panchayath Management System'}
           </h1>
-          <p className="text-xl text-blue-100">
+          <p className="text-base md:text-xl text-blue-100">
             {adminUser ? 'Admin Control Panel - Full System Access' :
              memberUser ? `${memberUser.panchayath?.name || 'Your Panchayath'} Management Dashboard` : 
              'Streamline operations, enhance transparency, and empower communities'}
@@ -49,22 +49,22 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-6 py-8">
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <main className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
           {/* Staff Management - Always available */}
           <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-white border-0 shadow-lg">
             <CardHeader className="text-center pb-4">
               <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <Users className="h-8 w-8 text-white" />
               </div>
-              <CardTitle className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">ഏജൻ്റുമാരെ ചേർക്കുക</CardTitle>
-              <CardDescription className="text-gray-600">
+              <CardTitle className="text-lg md:text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">ഏജൻ്റുമാരെ ചേർക്കുക</CardTitle>
+              <CardDescription className="text-sm md:text-base text-gray-600">
                 Manage agents and staff members for efficient operations
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
               <Link to="/add-agents">
-                <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300">
+                <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 text-sm md:text-base">
                   Manage Staff
                 </Button>
               </Link>
@@ -77,8 +77,8 @@ const Index = () => {
               <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gradient-to-r from-teal-500 to-cyan-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <CalendarDays className="h-8 w-8 text-white" />
               </div>
-              <CardTitle className="text-xl font-bold text-gray-800 group-hover:text-teal-600 transition-colors">ഡെയിലി നോട്ട്</CardTitle>
-              <CardDescription className="text-gray-600">
+              <CardTitle className="text-lg md:text-xl font-bold text-gray-800 group-hover:text-teal-600 transition-colors">ഡെയിലി നോട്ട്</CardTitle>
+              <CardDescription className="text-sm md:text-base text-gray-600">
                 Log and track daily activities for agents
               </CardDescription>
             </CardHeader>
@@ -96,14 +96,14 @@ const Index = () => {
                   <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gradient-to-r from-green-500 to-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <TreePine className="h-8 w-8 text-white" />
                   </div>
-                  <CardTitle className="text-xl font-bold text-gray-800 group-hover:text-green-600 transition-colors">ഏജൻ്റ് ശ്രേണി കാണുക</CardTitle>
-                  <CardDescription className="text-gray-600">
+                  <CardTitle className="text-lg md:text-xl font-bold text-gray-800 group-hover:text-green-600 transition-colors">ഏജൻ്റ് ശ്രേണി കാണുക</CardTitle>
+                  <CardDescription className="text-sm md:text-base text-gray-600">
                     Visualize organizational structure and agent relationships in interactive charts
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="text-center">
                   <Link to="/view-hierarchy">
-                    <Button className="w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300">
+                    <Button className="w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 text-sm md:text-base">
                       View Organization Chart
                     </Button>
                   </Link>
@@ -116,15 +116,15 @@ const Index = () => {
                   <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <CheckSquare className="h-8 w-8 text-white" />
                   </div>
-                  <CardTitle className="text-xl font-bold text-gray-800 group-hover:text-purple-600 transition-colors">ടാസ്ക് മാനേജ്മെൻ്റ്
+                  <CardTitle className="text-lg md:text-xl font-bold text-gray-800 group-hover:text-purple-600 transition-colors">ടാസ്ക് മാനേജ്മെൻ്റ്
               </CardTitle>
-                  <CardDescription className="text-gray-600">
+                  <CardDescription className="text-sm md:text-base text-gray-600">
                     Create, assign, and track tasks for teams and individual agents
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="text-center">
                   <Link to="/task-management">
-                    <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300">
+                    <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 text-sm md:text-base">
                       Manage Tasks
                     </Button>
                   </Link>
@@ -137,16 +137,16 @@ const Index = () => {
                   <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gradient-to-r from-orange-500 to-red-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <FileText className="h-8 w-8 text-white" />
                   </div>
-                  <CardTitle className="text-xl font-bold text-gray-800 group-hover:text-orange-600 transition-colors">
+                  <CardTitle className="text-lg md:text-xl font-bold text-gray-800 group-hover:text-orange-600 transition-colors">
                     Panchayath Notes
                   </CardTitle>
-                  <CardDescription className="text-gray-600">
+                  <CardDescription className="text-sm md:text-base text-gray-600">
                     View and manage notes about panchayath status and updates
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="text-center">
                   <Link to="/panchayath-notes">
-                    <Button className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300">
+                    <Button className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 text-sm md:text-base">
                       View Notes
                     </Button>
                   </Link>
