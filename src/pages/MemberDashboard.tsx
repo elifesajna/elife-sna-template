@@ -5,7 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { User, Users, Calendar, Clock, MapPin, Phone, Mail, LogOut, Home, CheckCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { User, Users, Calendar, Clock, MapPin, Phone, Mail, LogOut, Home, CheckCircle, XCircle, MessageSquare, Eye } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -55,6 +58,15 @@ export default function MemberDashboard() {
   const [allTeamMembers, setAllTeamMembers] = useState<TeamMember[]>([]);
   const [taskRemarks, setTaskRemarks] = useState<TaskRemark[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Dialog states
+  const [remarks, setRemarks] = useState('');
+  const [isRemarksDialogOpen, setIsRemarksDialogOpen] = useState(false);
+  const [isViewRemarksDialogOpen, setIsViewRemarksDialogOpen] = useState(false);
+  const [existingRemarks, setExistingRemarks] = useState<TaskRemark[]>([]);
+  const [pendingStatus, setPendingStatus] = useState<'completed' | 'cancelled' | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -206,6 +218,115 @@ export default function MemberDashboard() {
         return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Action functions for tasks
+  const handleStatusChange = async (task: Task, newStatus: 'completed' | 'cancelled') => {
+    try {
+      const { error: taskError } = await supabase
+        .from('tasks')
+        .update({ 
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', task.id);
+
+      if (taskError) throw taskError;
+
+      // Add remarks if provided
+      if (remarks.trim()) {
+        const { error: remarkError } = await supabase
+          .from('task_remarks')
+          .insert({
+            task_id: task.id,
+            remark: remarks.trim(),
+            updated_by: memberUser.name || memberUser.mobileNumber
+          });
+
+        if (remarkError) {
+          console.error('Error adding remark:', remarkError);
+        }
+      }
+
+      toast({
+        title: "Success",
+        description: `Task marked as ${newStatus}`,
+      });
+      
+      setIsRemarksDialogOpen(false);
+      setRemarks('');
+      setPendingStatus(null);
+      setSelectedTask(null);
+      fetchData(memberUser);
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update task status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddRemark = async (task: Task) => {
+    if (!remarks.trim()) return;
+    
+    try {
+      const { error } = await supabase
+        .from('task_remarks')
+        .insert({
+          task_id: task.id,
+          remark: remarks.trim(),
+          updated_by: memberUser.name || memberUser.mobileNumber
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Remark added successfully",
+      });
+      
+      setIsRemarksDialogOpen(false);
+      setRemarks('');
+      setSelectedTask(null);
+      fetchData(memberUser);
+    } catch (error) {
+      console.error('Error adding remark:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add remark",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const openRemarksDialog = (task: Task, status?: 'completed' | 'cancelled') => {
+    setSelectedTask(task);
+    setPendingStatus(status || null);
+    setIsRemarksDialogOpen(true);
+  };
+
+  const fetchTaskRemarks = async (task: Task) => {
+    try {
+      const { data, error } = await supabase
+        .from('task_remarks')
+        .select('*')
+        .eq('task_id', task.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setExistingRemarks(data || []);
+      setSelectedTask(task);
+      setIsViewRemarksDialogOpen(true);
+    } catch (error) {
+      console.error('Error fetching remarks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch task remarks",
+        variant: "destructive",
+      });
     }
   };
 
@@ -388,6 +509,7 @@ export default function MemberDashboard() {
                               <TableHead>Due Date</TableHead>
                               <TableHead>Status</TableHead>
                               <TableHead>Created</TableHead>
+                              <TableHead>Actions</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -410,6 +532,46 @@ export default function MemberDashboard() {
                                 </TableCell>
                                 <TableCell>
                                   {new Date(task.created_at).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex gap-1 flex-wrap">
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => fetchTaskRemarks(task)}
+                                      className="h-8 px-2 text-xs"
+                                    >
+                                      <Eye className="h-3 w-3" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => openRemarksDialog(task)}
+                                      className="h-8 px-2 text-xs"
+                                    >
+                                      <MessageSquare className="h-3 w-3" />
+                                    </Button>
+                                    {task.status === 'pending' && (
+                                      <>
+                                        <Button
+                                          size="sm"
+                                          variant="default"
+                                          onClick={() => openRemarksDialog(task, 'completed')}
+                                          className="bg-green-600 hover:bg-green-700 h-8 px-2 text-xs"
+                                        >
+                                          <CheckCircle className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="destructive"
+                                          onClick={() => openRemarksDialog(task, 'cancelled')}
+                                          className="h-8 px-2 text-xs"
+                                        >
+                                          <XCircle className="h-3 w-3" />
+                                        </Button>
+                                      </>
+                                    )}
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -532,17 +694,18 @@ export default function MemberDashboard() {
                        {/* Team Tasks */}
                        <div className="overflow-x-auto">
                          <Table>
-                           <TableHeader>
-                             <TableRow>
-                               <TableHead>Title</TableHead>
-                               <TableHead>Description</TableHead>
-                               <TableHead>Priority</TableHead>
-                               <TableHead>Due Date</TableHead>
-                               <TableHead>Status</TableHead>
-                               <TableHead>Created</TableHead>
-                               <TableHead>Remarks</TableHead>
-                             </TableRow>
-                           </TableHeader>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Title</TableHead>
+                                <TableHead>Description</TableHead>
+                                <TableHead>Priority</TableHead>
+                                <TableHead>Due Date</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Created</TableHead>
+                                <TableHead>Remarks</TableHead>
+                                <TableHead>Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
                            <TableBody>
                              {teamTasks.map((task) => (
                                <TableRow key={task.id}>
@@ -581,7 +744,47 @@ export default function MemberDashboard() {
                                        <span className="text-gray-400 text-xs">No remarks</span>
                                      )}
                                    </div>
-                                 </TableCell>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex gap-1 flex-wrap">
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => fetchTaskRemarks(task)}
+                                        className="h-8 px-2 text-xs"
+                                      >
+                                        <Eye className="h-3 w-3" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => openRemarksDialog(task)}
+                                        className="h-8 px-2 text-xs"
+                                      >
+                                        <MessageSquare className="h-3 w-3" />
+                                      </Button>
+                                      {task.status === 'pending' && (
+                                        <>
+                                          <Button
+                                            size="sm"
+                                            variant="default"
+                                            onClick={() => openRemarksDialog(task, 'completed')}
+                                            className="bg-green-600 hover:bg-green-700 h-8 px-2 text-xs"
+                                          >
+                                            <CheckCircle className="h-3 w-3" />
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="destructive"
+                                            onClick={() => openRemarksDialog(task, 'cancelled')}
+                                            className="h-8 px-2 text-xs"
+                                          >
+                                            <XCircle className="h-3 w-3" />
+                                          </Button>
+                                        </>
+                                      )}
+                                    </div>
+                                  </TableCell>
                                </TableRow>
                              ))}
                            </TableBody>
@@ -595,6 +798,107 @@ export default function MemberDashboard() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Remarks Dialog */}
+      <Dialog open={isRemarksDialogOpen} onOpenChange={setIsRemarksDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              {pendingStatus === 'completed' ? 'Complete Task' : 
+               pendingStatus === 'cancelled' ? 'Cancel Task' : 'Add Remark'}
+            </DialogTitle>
+            <DialogDescription>
+              {pendingStatus ? 'Add remarks about this task (optional)' : 'Add a remark to this task'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="remarks">Remarks</Label>
+              <Textarea
+                id="remarks"
+                placeholder="Enter any comments or remarks about this task..."
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                rows={4}
+              />
+            </div>
+            
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsRemarksDialogOpen(false);
+                  setRemarks('');
+                  setPendingStatus(null);
+                  setSelectedTask(null);
+                }}
+              >
+                Cancel
+              </Button>
+              {pendingStatus ? (
+                <Button
+                  onClick={() => selectedTask && handleStatusChange(selectedTask, pendingStatus)}
+                  className={pendingStatus === 'completed' ? 'bg-green-600 hover:bg-green-700' : ''}
+                  variant={pendingStatus === 'completed' ? 'default' : 'destructive'}
+                >
+                  {pendingStatus === 'completed' ? 'Complete Task' : 'Cancel Task'}
+                </Button>
+              ) : (
+                <Button 
+                  onClick={() => selectedTask && handleAddRemark(selectedTask)}
+                  disabled={!remarks.trim()}
+                >
+                  Add Remark
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Remarks Dialog */}
+      <Dialog open={isViewRemarksDialogOpen} onOpenChange={setIsViewRemarksDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Task Remarks
+            </DialogTitle>
+            <DialogDescription>
+              View all remarks and comments for this task
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 max-h-96 overflow-y-auto">
+            {existingRemarks.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No remarks found for this task.</p>
+            ) : (
+              existingRemarks.map((remark) => (
+                <div key={remark.id} className="border rounded-lg p-3 bg-gray-50">
+                  <div className="flex justify-between items-start mb-2">
+                    <Badge variant="outline">{remark.updated_by}</Badge>
+                    <span className="text-xs text-gray-500">
+                      {new Date(remark.created_at).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="text-gray-700">{remark.remark}</p>
+                </div>
+              ))
+            )}
+          </div>
+          
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setIsViewRemarksDialogOpen(false)}
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
