@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { User, Users, Calendar, Clock, MapPin, Phone, Mail, LogOut, Home, CheckCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -377,14 +378,43 @@ export default function MemberDashboard() {
                         No pending personal tasks found.
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        {pendingPersonalTasks.map((task) => (
-                          <PersonalTaskCard 
-                            key={task.id} 
-                            task={task} 
-                            onTaskUpdate={() => fetchData(memberUser)}
-                          />
-                        ))}
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Title</TableHead>
+                              <TableHead>Description</TableHead>
+                              <TableHead>Priority</TableHead>
+                              <TableHead>Due Date</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Created</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {pendingPersonalTasks.map((task) => (
+                              <TableRow key={task.id}>
+                                <TableCell className="font-medium">{task.title}</TableCell>
+                                <TableCell className="max-w-xs truncate">{task.description || 'No description'}</TableCell>
+                                <TableCell>
+                                  <Badge className={getPriorityColor(task.priority)}>
+                                    {task.priority}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge className={getStatusColor(task.status)}>
+                                    {task.status}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {new Date(task.created_at).toLocaleDateString()}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
                       </div>
                     )}
                   </CardContent>
@@ -405,14 +435,43 @@ export default function MemberDashboard() {
                         No completed personal tasks found.
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        {completedPersonalTasks.map((task) => (
-                          <PersonalTaskCard 
-                            key={task.id} 
-                            task={task} 
-                            onTaskUpdate={() => fetchData(memberUser)}
-                          />
-                        ))}
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Title</TableHead>
+                              <TableHead>Description</TableHead>
+                              <TableHead>Priority</TableHead>
+                              <TableHead>Due Date</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Created</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {completedPersonalTasks.map((task) => (
+                              <TableRow key={task.id}>
+                                <TableCell className="font-medium">{task.title}</TableCell>
+                                <TableCell className="max-w-xs truncate">{task.description || 'No description'}</TableCell>
+                                <TableCell>
+                                  <Badge className={getPriorityColor(task.priority)}>
+                                    {task.priority}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge className={getStatusColor(task.status)}>
+                                    {task.status}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {new Date(task.created_at).toLocaleDateString()}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
                       </div>
                     )}
                   </CardContent>
@@ -471,36 +530,62 @@ export default function MemberDashboard() {
                        </div>
 
                        {/* Team Tasks */}
-                       <div className="space-y-4">
-                         {teamTasks.map((task) => (
-                           <div key={task.id} className="space-y-3">
-                             <TeamTaskCard 
-                               task={task} 
-                               onTaskUpdate={() => fetchData(memberUser)}
-                               canModify={true} // Allow team members to modify team tasks
-                             />
-                             
-                             {/* Task Remarks */}
-                             {taskRemarks.filter(remark => remark.task_id === task.id).length > 0 && (
-                               <div className="ml-4 pl-4 border-l-2 border-gray-200">
-                                 <h5 className="font-medium text-sm mb-2">Member Remarks:</h5>
-                                 <div className="space-y-2">
-                                   {taskRemarks
-                                     .filter(remark => remark.task_id === task.id)
-                                     .map((remark) => (
-                                       <div key={remark.id} className="bg-blue-50 p-2 rounded text-sm">
-                                         <div className="font-medium">{remark.updated_by}</div>
-                                         <div className="text-gray-700">{remark.remark}</div>
-                                         <div className="text-xs text-gray-500 mt-1">
-                                           {new Date(remark.created_at).toLocaleDateString()}
+                       <div className="overflow-x-auto">
+                         <Table>
+                           <TableHeader>
+                             <TableRow>
+                               <TableHead>Title</TableHead>
+                               <TableHead>Description</TableHead>
+                               <TableHead>Priority</TableHead>
+                               <TableHead>Due Date</TableHead>
+                               <TableHead>Status</TableHead>
+                               <TableHead>Created</TableHead>
+                               <TableHead>Remarks</TableHead>
+                             </TableRow>
+                           </TableHeader>
+                           <TableBody>
+                             {teamTasks.map((task) => (
+                               <TableRow key={task.id}>
+                                 <TableCell className="font-medium">{task.title}</TableCell>
+                                 <TableCell className="max-w-xs truncate">{task.description || 'No description'}</TableCell>
+                                 <TableCell>
+                                   <Badge className={getPriorityColor(task.priority)}>
+                                     {task.priority}
+                                   </Badge>
+                                 </TableCell>
+                                 <TableCell>
+                                   {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}
+                                 </TableCell>
+                                 <TableCell>
+                                   <Badge className={getStatusColor(task.status)}>
+                                     {task.status}
+                                   </Badge>
+                                 </TableCell>
+                                 <TableCell>
+                                   {new Date(task.created_at).toLocaleDateString()}
+                                 </TableCell>
+                                 <TableCell>
+                                   <div className="space-y-1">
+                                     {taskRemarks
+                                       .filter(remark => remark.task_id === task.id)
+                                       .map((remark) => (
+                                         <div key={remark.id} className="bg-blue-50 p-2 rounded text-xs">
+                                           <div className="font-medium">{remark.updated_by}</div>
+                                           <div className="text-gray-700">{remark.remark}</div>
+                                           <div className="text-xs text-gray-500">
+                                             {new Date(remark.created_at).toLocaleDateString()}
+                                           </div>
                                          </div>
-                                       </div>
-                                     ))}
-                                 </div>
-                               </div>
-                             )}
-                           </div>
-                         ))}
+                                       ))}
+                                     {taskRemarks.filter(remark => remark.task_id === task.id).length === 0 && (
+                                       <span className="text-gray-400 text-xs">No remarks</span>
+                                     )}
+                                   </div>
+                                 </TableCell>
+                               </TableRow>
+                             ))}
+                           </TableBody>
+                         </Table>
                        </div>
                     </div>
                   )}
