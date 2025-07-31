@@ -76,13 +76,13 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({ task, onTaskUpdate 
 
       // Add remarks if provided
       if (remarks.trim()) {
+        const memberUser = JSON.parse(localStorage.getItem('member_user') || '{}');
         const { error: remarkError } = await supabase
           .from('task_remarks')
           .insert({
             task_id: task.id,
             remark: remarks.trim(),
-            status: newStatus,
-            created_at: new Date().toISOString()
+            updated_by: memberUser.name || memberUser.mobileNumber
           });
 
         if (remarkError) {
@@ -114,13 +114,13 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({ task, onTaskUpdate 
     if (!remarks.trim()) return;
     
     try {
+      const memberUser = JSON.parse(localStorage.getItem('member_user') || '{}');
       const { error } = await supabase
         .from('task_remarks')
         .insert({
           task_id: task.id,
           remark: remarks.trim(),
-          status: task.status,
-          created_at: new Date().toISOString()
+          updated_by: memberUser.name || memberUser.mobileNumber
         });
 
       if (error) throw error;

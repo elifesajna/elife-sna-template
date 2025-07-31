@@ -380,53 +380,65 @@ export default function MemberDashboard() {
           </TabsContent>
 
           <TabsContent value="team" className="mt-4 sm:mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Team Tasks</CardTitle>
-                <CardDescription>
-                  Tasks assigned to teams you are a member of
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {teamMemberships.length === 0 ? (
+            {teamMemberships.length === 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Team Tasks</CardTitle>
+                  <CardDescription>
+                    You are not a Team Member
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
                   <Alert>
                     <AlertDescription>
                       You are not a team member. Contact your administrator to be added to a team.
                     </AlertDescription>
                   </Alert>
-                ) : teamTasks.length === 0 ? (
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Team Tasks</CardTitle>
+                  <CardDescription>
+                    Tasks assigned to teams you are a member of
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {teamTasks.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     No team tasks found.
                   </div>
-                ) : (
-                  <div className="space-y-6">
-                    {/* Team Memberships */}
-                    <div className="mb-6">
-                      <h4 className="font-medium mb-3">Your Teams:</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {teamMemberships.map((membership) => (
-                          <Badge key={membership.id} variant="outline">
-                            {membership.management_teams?.name}
-                          </Badge>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Team Memberships */}
+                      <div className="mb-6">
+                        <h4 className="font-medium mb-3">Your Teams:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {teamMemberships.map((membership) => (
+                            <Badge key={membership.id} variant="outline">
+                              {membership.management_teams?.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Team Tasks */}
+                      <div className="space-y-4">
+                        {teamTasks.map((task) => (
+                          <TeamTaskCard 
+                            key={task.id} 
+                            task={task} 
+                            onTaskUpdate={() => fetchData(memberUser)}
+                            canModify={true} // Allow team members to modify team tasks
+                          />
                         ))}
                       </div>
                     </div>
-
-                    {/* Team Tasks */}
-                    <div className="space-y-4">
-                      {teamTasks.map((task) => (
-                        <TeamTaskCard 
-                          key={task.id} 
-                          task={task} 
-                          onTaskUpdate={() => fetchData(memberUser)}
-                          canModify={true} // Allow team members to modify team tasks
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </main>

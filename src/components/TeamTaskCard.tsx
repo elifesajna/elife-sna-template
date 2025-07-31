@@ -78,13 +78,13 @@ const TeamTaskCard: React.FC<TeamTaskCardProps> = ({ task, onTaskUpdate, canModi
 
       // Add remarks if provided
       if (remarks.trim()) {
+        const memberUser = JSON.parse(localStorage.getItem('member_user') || '{}');
         const { error: remarkError } = await supabase
           .from('task_remarks')
           .insert({
             task_id: task.id,
             remark: remarks.trim(),
-            status: newStatus,
-            created_at: new Date().toISOString()
+            updated_by: memberUser.name || memberUser.mobileNumber
           });
 
         if (remarkError) {
@@ -181,13 +181,13 @@ const TeamTaskCard: React.FC<TeamTaskCardProps> = ({ task, onTaskUpdate, canModi
     if (!remarks.trim()) return;
     
     try {
+      const memberUser = JSON.parse(localStorage.getItem('member_user') || '{}');
       const { error } = await supabase
         .from('task_remarks')
         .insert({
           task_id: task.id,
           remark: remarks.trim(),
-          status: task.status,
-          created_at: new Date().toISOString()
+          updated_by: memberUser.name || memberUser.mobileNumber
         });
 
       if (error) throw error;
@@ -367,7 +367,13 @@ const TeamTaskCard: React.FC<TeamTaskCardProps> = ({ task, onTaskUpdate, canModi
               existingRemarks.map((remark, index) => (
                 <div key={index} className="border rounded-lg p-3 bg-gray-50">
                   <div className="flex justify-between items-start mb-2">
-                    <Badge variant="outline">{remark.status}</Badge>
+                    <div className="flex items-center gap-2">
+                      {remark.updated_by && (
+                        <Badge variant="secondary" className="text-xs">
+                          {remark.updated_by}
+                        </Badge>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-gray-500">
                         {new Date(remark.created_at).toLocaleString()}
