@@ -31,6 +31,19 @@ interface TeamMember {
     name: string;
     description?: string;
   };
+  agents?: {
+    name: string;
+    phone?: string;
+    role?: string;
+  };
+}
+
+interface TaskRemark {
+  id: string;
+  task_id: string;
+  remark: string;
+  updated_by?: string;
+  created_at: string;
 }
 
 export default function MemberDashboard() {
@@ -38,6 +51,8 @@ export default function MemberDashboard() {
   const [personalTasks, setPersonalTasks] = useState<Task[]>([]);
   const [teamTasks, setTeamTasks] = useState<Task[]>([]);
   const [teamMemberships, setTeamMemberships] = useState<TeamMember[]>([]);
+  const [allTeamMembers, setAllTeamMembers] = useState<TeamMember[]>([]);
+  const [taskRemarks, setTaskRemarks] = useState<TaskRemark[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -110,10 +125,11 @@ export default function MemberDashboard() {
 
       setTeamMemberships(teamMemberData);
 
-      // Fetch team tasks if user is a team member
+      // Fetch team tasks and related info if user is a team member
       if (teamMemberData && teamMemberData.length > 0) {
         const teamIds = teamMemberData.map(tm => tm.team_id);
         
+        // Fetch team tasks
         const { data: teamTasksData, error: teamTasksError } = await supabase
           .from('tasks')
           .select('*')
@@ -122,6 +138,32 @@ export default function MemberDashboard() {
 
         if (teamTasksError) throw teamTasksError;
         setTeamTasks(teamTasksData || []);
+
+        // Fetch all team members for the teams this user belongs to
+        const { data: allTeamMembersData, error: allTeamMembersError } = await supabase
+          .from('management_team_members')
+          .select(`
+            *,
+            management_teams(name, description),
+            agents(name, phone, role)
+          `)
+          .in('team_id', teamIds);
+
+        if (allTeamMembersError) throw allTeamMembersError;
+        setAllTeamMembers(allTeamMembersData || []);
+
+        // Fetch task remarks for team tasks
+        if (teamTasksData && teamTasksData.length > 0) {
+          const taskIds = teamTasksData.map(task => task.id);
+          const { data: remarksData, error: remarksError } = await supabase
+            .from('task_remarks')
+            .select('*')
+            .in('task_id', taskIds)
+            .order('created_at', { ascending: false });
+
+          if (remarksError) throw remarksError;
+          setTaskRemarks(remarksData || []);
+        }
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -411,29 +453,55 @@ export default function MemberDashboard() {
                   </div>
                   ) : (
                     <div className="space-y-6">
-                      {/* Team Memberships */}
-                      <div className="mb-6">
-                        <h4 className="font-medium mb-3">Your Teams:</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {teamMemberships.map((membership) => (
-                            <Badge key={membership.id} variant="outline">
-                              {membership.management_teams?.name}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
+                       {/* Team Members Info */}
+                       <div className="mb-6">
+                         <h4 className="font-medium mb-3">Team Members:</h4>
+                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                           {allTeamMembers.map((member) => (
+                             <div key={member.id} className="bg-gray-50 p-3 rounded-lg">
+                               <div className="font-medium">{member.agents?.name}</div>
+                               <div className="text-sm text-gray-600">{member.agents?.phone}</div>
+                               <div className="text-xs text-gray-500">{member.agents?.role}</div>
+                               <Badge variant="outline" className="mt-1 text-xs">
+                                 {member.management_teams?.name}
+                               </Badge>
+                             </div>
+                           ))}
+                         </div>
+                       </div>
 
-                      {/* Team Tasks */}
-                      <div className="space-y-4">
-                        {teamTasks.map((task) => (
-                          <TeamTaskCard 
-                            key={task.id} 
-                            task={task} 
-                            onTaskUpdate={() => fetchData(memberUser)}
-                            canModify={true} // Allow team members to modify team tasks
-                          />
-                        ))}
-                      </div>
+                       {/* Team Tasks */}
+                       <div className="space-y-4">
+                         {teamTasks.map((task) => (
+                           <div key={task.id} className="space-y-3">
+                             <TeamTaskCard 
+                               task={task} 
+                               onTaskUpdate={() => fetchData(memberUser)}
+                               canModify={true} // Allow team members to modify team tasks
+                             />
+                             
+                             {/* Task Remarks */}
+                             {taskRemarks.filter(remark => remark.task_id === task.id).length > 0 && (
+                               <div className="ml-4 pl-4 border-l-2 border-gray-200">
+                                 <h5 className="font-medium text-sm mb-2">Member Remarks:</h5>
+                                 <div className="space-y-2">
+                                   {taskRemarks
+                                     .filter(remark => remark.task_id === task.id)
+                                     .map((remark) => (
+                                       <div key={remark.id} className="bg-blue-50 p-2 rounded text-sm">
+                                         <div className="font-medium">{remark.updated_by}</div>
+                                         <div className="text-gray-700">{remark.remark}</div>
+                                         <div className="text-xs text-gray-500 mt-1">
+                                           {new Date(remark.created_at).toLocaleDateString()}
+                                         </div>
+                                       </div>
+                                     ))}
+                                 </div>
+                               </div>
+                             )}
+                           </div>
+                         ))}
+                       </div>
                     </div>
                   )}
                 </CardContent>
