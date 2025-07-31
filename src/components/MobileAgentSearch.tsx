@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, User, Phone } from "lucide-react";
-import { typedSupabase, TABLES } from "@/lib/supabase-utils";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface Agent {
@@ -38,8 +38,8 @@ export const MobileAgentSearch = ({ onAgentSelect, selectedAgentId }: MobileAgen
 
     setIsSearching(true);
     try {
-      const { data, error } = await typedSupabase
-        .from(TABLES.AGENTS)
+      const { data, error } = await supabase
+        .from('agents')
         .select('*')
         .eq('phone', mobileNumber)
         .single();
