@@ -28,7 +28,7 @@ export default function AgentPointsStats() {
   const [panchayaths, setPanchayaths] = useState<any[]>([]);
   const [filters, setFilters] = useState({
     panchayath: 'all',
-    role: 'all',
+    role: 'coordinator',
     startDate: '',
     endDate: ''
   });

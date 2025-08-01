@@ -253,29 +253,29 @@ const AdminPanelContent = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {adminCards.map((card) => (
               <Card 
                 key={card.id} 
-                className="hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-102 min-h-[280px]"
+                className="hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-102 min-h-[160px]"
                 onClick={() => setActiveView(card.id)}
               >
-                <CardHeader className="text-center pb-4">
-                  <div className={`mx-auto p-6 rounded-full ${card.bgColor} mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                    <card.icon className={`h-10 w-10 ${card.color}`} />
+                <CardHeader className="text-center pb-2 p-4">
+                  <div className={`mx-auto p-3 rounded-full ${card.bgColor} mb-3 group-hover:scale-110 transition-transform duration-300`}>
+                    <card.icon className={`h-6 w-6 ${card.color}`} />
                   </div>
-                  <CardTitle className="text-xl font-semibold mb-2">{card.title}</CardTitle>
-                  <CardDescription className="text-sm text-gray-600 leading-relaxed">
+                  <CardTitle className="text-sm font-semibold mb-1">{card.title}</CardTitle>
+                  <CardDescription className="text-xs text-gray-600 leading-relaxed">
                     {card.description}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="text-center pt-4">
+                <CardContent className="text-center pt-2 p-4">
                   <Button 
                     variant="outline" 
-                    size="lg"
-                    className="w-full group-hover:bg-primary group-hover:text-white transition-colors duration-300 font-medium"
+                    size="sm"
+                    className="w-full group-hover:bg-primary group-hover:text-white transition-colors duration-300 font-medium text-xs"
                   >
-                    Open Module
+                    Open
                   </Button>
                 </CardContent>
               </Card>
