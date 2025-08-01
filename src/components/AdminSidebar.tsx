@@ -21,7 +21,8 @@ import {
   Settings,
   BarChart3,
   FileText,
-  Bell
+  Bell,
+  Award
 } from "lucide-react";
 import { useAdminAuth } from "./AdminAuthProvider";
 
@@ -31,6 +32,7 @@ const adminMenuItems = [
   { title: "User Approvals", url: "/admin/approvals", icon: UserCheck },
   { title: "Team Management", url: "/admin/teams", icon: Building2 },
   { title: "Task Management", url: "/admin/tasks", icon: CheckSquare },
+  { title: "Agent Points", url: "/admin/points", icon: Award },
   { title: "Panchayaths", url: "/admin/panchayaths", icon: Building2 },
   { title: "Permissions", url: "/admin/permissions", icon: Shield },
   { title: "Reports", url: "/admin/reports", icon: FileText },

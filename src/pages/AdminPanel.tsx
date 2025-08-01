@@ -17,6 +17,7 @@ import AdminPermissions from "@/components/AdminPermissions";
 import AdminReports from "@/components/AdminReports";
 import AdminNotifications from "@/components/AdminNotifications";
 import AdminSettings from "@/components/AdminSettings";
+import AgentPointsPage from "@/pages/AgentPointsPage";
 
 const AdminPanelContent = () => {
   const { adminUser, logout } = useAdminAuth();
@@ -86,6 +87,7 @@ const AdminPanelContent = () => {
               <Route path="/tasks" element={<EnhancedTaskManagement />} />
               <Route path="/panchayaths" element={<PanchayathManagement />} />
               <Route path="/permissions" element={<AdminPermissions />} />
+              <Route path="/points" element={<AgentPointsPage />} />
               <Route path="/reports" element={<AdminReports />} />
               <Route path="/notifications" element={<AdminNotifications />} />
               <Route path="/settings" element={<AdminSettings />} />

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckSquare, TreePine, Users, FileText, ClipboardList, CalendarDays } from "lucide-react";
+import { CheckSquare, TreePine, Users, FileText, ClipboardList, CalendarDays, Award } from "lucide-react";
 import { DailyActivityLog } from '@/components/DailyActivityLog';
+import AgentPointsCheck from '@/components/AgentPointsCheck';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
 import { useAdminAuth } from '@/components/AdminAuthProvider';
@@ -84,6 +85,22 @@ const Index = () => {
             </CardHeader>
             <CardContent className="text-center">
               <DailyActivityLog />
+            </CardContent>
+          </Card>
+
+          {/* Agent Points Check - Always available */}
+          <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-white border-0 shadow-lg">
+            <CardHeader className="text-center pb-4">
+              <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gradient-to-r from-yellow-500 to-orange-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <Award className="h-8 w-8 text-white" />
+              </div>
+              <CardTitle className="text-lg md:text-xl font-bold text-gray-800 group-hover:text-yellow-600 transition-colors">Check Points</CardTitle>
+              <CardDescription className="text-sm md:text-base text-gray-600">
+                Check agent points based on daily activities
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AgentPointsCheck />
             </CardContent>
           </Card>
 
