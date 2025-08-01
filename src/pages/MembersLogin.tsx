@@ -13,7 +13,6 @@ import { MobileAgentSearch } from "@/components/MobileAgentSearch";
 
 export default function MembersLogin() {
   const [loginData, setLoginData] = useState({
-    name: '',
     mobileNumber: ''
   });
   const [registrationData, setRegistrationData] = useState({
@@ -34,11 +33,10 @@ export default function MembersLogin() {
     setIsLoggingIn(true);
     
     try {
-      // Check if member exists and is approved
+      // Check if member exists and is approved using only mobile number
       const { data, error } = await supabase
         .from('user_registration_requests')
         .select('*, panchayaths(name, district, state)')
-        .eq('username', loginData.name.trim())
         .eq('mobile_number', loginData.mobileNumber)
         .single();
 
@@ -46,7 +44,7 @@ export default function MembersLogin() {
         if (error.code === 'PGRST116') {
           toast({
             title: "Error",
-            description: "Invalid name or mobile number",
+            description: "Mobile number not found or not registered",
             variant: "destructive"
           });
         } else {
@@ -208,7 +206,7 @@ export default function MembersLogin() {
               <CardHeader className="text-center">
                 <CardTitle>Member Login</CardTitle>
                 <CardDescription>
-                  Login with your approved name and mobile number
+                  Login with your registered mobile number
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -232,29 +230,13 @@ export default function MembersLogin() {
 
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-name">Name</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="login-name"
-                        type="text"
-                        placeholder="Enter your name"
-                        value={loginData.name}
-                        onChange={(e) => setLoginData(prev => ({ ...prev, name: e.target.value }))}
-                        className="pl-10"
-                        disabled={isLoggingIn}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
                     <Label htmlFor="login-mobile">Mobile Number</Label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="login-mobile"
                         type="tel"
-                        placeholder="Enter mobile number"
+                        placeholder="Enter your registered mobile number"
                         value={loginData.mobileNumber}
                         onChange={(e) => setLoginData(prev => ({ ...prev, mobileNumber: e.target.value }))}
                         className="pl-10"
