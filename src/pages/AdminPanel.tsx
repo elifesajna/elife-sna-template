@@ -245,33 +245,35 @@ const AdminPanelContent = () => {
 
       {/* Main Content - Card Grid */}
       <main className="p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h2>
-            <p className="text-gray-600">Select a module to manage system functions</p>
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-10 text-center">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Admin Dashboard</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Select a module to manage system functions and monitor your organization
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {adminCards.map((card) => (
               <Card 
                 key={card.id} 
-                className="hover:shadow-lg transition-all duration-200 cursor-pointer group hover:scale-105"
+                className="hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-102 min-h-[280px]"
                 onClick={() => setActiveView(card.id)}
               >
-                <CardHeader className="text-center">
-                  <div className={`mx-auto p-4 rounded-full ${card.bgColor} mb-4 group-hover:scale-110 transition-transform`}>
-                    <card.icon className={`h-8 w-8 ${card.color}`} />
+                <CardHeader className="text-center pb-4">
+                  <div className={`mx-auto p-6 rounded-full ${card.bgColor} mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                    <card.icon className={`h-10 w-10 ${card.color}`} />
                   </div>
-                  <CardTitle className="text-lg">{card.title}</CardTitle>
-                  <CardDescription className="text-sm">
+                  <CardTitle className="text-xl font-semibold mb-2">{card.title}</CardTitle>
+                  <CardDescription className="text-sm text-gray-600 leading-relaxed">
                     {card.description}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="text-center">
+                <CardContent className="text-center pt-4">
                   <Button 
                     variant="outline" 
-                    size="sm"
-                    className="w-full group-hover:bg-primary group-hover:text-white transition-colors"
+                    size="lg"
+                    className="w-full group-hover:bg-primary group-hover:text-white transition-colors duration-300 font-medium"
                   >
                     Open Module
                   </Button>
