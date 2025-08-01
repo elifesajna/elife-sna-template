@@ -87,12 +87,36 @@ export default function MemberDashboard() {
     try {
       setLoading(true);
 
-      // First get agent data, then fetch personal tasks
-      const { data: agentData, error: agentError } = await supabase
+      // First get agent data, try multiple approaches to find the agent
+      let agentData = null;
+      let agentError = null;
+
+      // Try exact phone match first
+      const { data: exactMatch, error: exactError } = await supabase
         .from('agents')
-        .select('id')
+        .select('id, name, phone, role, panchayath_id')
         .eq('phone', user.mobileNumber)
         .maybeSingle();
+
+      if (exactMatch && !exactError) {
+        agentData = exactMatch;
+      } else {
+        // Try name + panchayath match as fallback for Sajna's case
+        const { data: nameMatch, error: nameError } = await supabase
+          .from('agents')
+          .select('id, name, phone, role, panchayath_id')
+          .eq('name', user.name)
+          .eq('panchayath_id', user.panchayath_id)
+          .maybeSingle();
+
+        if (nameMatch && !nameError) {
+          agentData = nameMatch;
+          console.log('Found agent by name + panchayath match:', nameMatch);
+        } else {
+          console.log('Agent lookup failed for user:', user);
+          agentError = nameError || exactError;
+        }
+      }
 
       let personalTasksData = [];
       if (agentData && !agentError) {
