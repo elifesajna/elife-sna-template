@@ -92,14 +92,27 @@ export default function AgentPointsStats() {
           name,
           phone,
           role,
-          panchayaths(name, district, state)
+          panchayath_id
         `)
         .order('name');
 
       if (agentsError) throw agentsError;
 
+      // Get panchayath details separately
+      const panchayathIds = [...new Set(agents.map(agent => agent.panchayath_id))];
+      const { data: panchayathData, error: panchayathError } = await supabase
+        .from('panchayaths')
+        .select('id, name, district, state')
+        .in('id', panchayathIds);
+
+      if (panchayathError) throw panchayathError;
+
+      // Create a map for quick lookup
+      const panchayathMap = new Map(panchayathData.map(p => [p.id, p]));
+
       // Get activity counts for each agent
       const statsPromises = agents.map(async (agent) => {
+        const panchayath = panchayathMap.get(agent.panchayath_id);
         const pointsPerActivity = getRolePoints(agent.role);
 
         // Count total activities based on date filter
@@ -130,9 +143,9 @@ export default function AgentPointsStats() {
           name: agent.name,
           phone: agent.phone || '',
           role: agent.role,
-          panchayath: agent.panchayaths?.name || '',
-          district: agent.panchayaths?.district || '',
-          state: agent.panchayaths?.state || '',
+          panchayath: panchayath?.name || '',
+          district: panchayath?.district || '',
+          state: panchayath?.state || '',
           totalPoints: (totalActivities || 0) * pointsPerActivity,
           totalActivities: totalActivities || 0,
           lastActivity: lastActivityData?.[0]?.activity_date || 'Never'
