@@ -203,7 +203,7 @@ export const DailyActivityLog = () => {
     if (!open) resetForm();
   }}>
       <DialogTrigger asChild>
-        <Button className="gap-2 bg-pink-950 hover:bg-pink-800">
+        <Button className="gap-2 bg-slate-950 hover:bg-slate-800">
           <CalendarDays className="h-4 w-4" />
           Daily Activity Log
         </Button>
