@@ -27,8 +27,8 @@ export default function AgentPointsStats() {
   const [filteredStats, setFilteredStats] = useState<AgentStats[]>([]);
   const [panchayaths, setPanchayaths] = useState<any[]>([]);
   const [filters, setFilters] = useState({
-    panchayath: '',
-    role: '',
+    panchayath: 'all',
+    role: 'all',
     startDate: '',
     endDate: ''
   });
@@ -170,11 +170,11 @@ export default function AgentPointsStats() {
   const applyFilters = () => {
     let filtered = [...agentStats];
 
-    if (filters.panchayath) {
+    if (filters.panchayath && filters.panchayath !== 'all') {
       filtered = filtered.filter(agent => agent.panchayath === filters.panchayath);
     }
 
-    if (filters.role) {
+    if (filters.role && filters.role !== 'all') {
       filtered = filtered.filter(agent => agent.role === filters.role);
     }
 
@@ -268,12 +268,12 @@ export default function AgentPointsStats() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <Select value={filters.panchayath} onValueChange={(value) => setFilters(prev => ({ ...prev, panchayath: value }))}>
+            <Select value={filters.panchayath} onValueChange={(value) => setFilters(prev => ({ ...prev, panchayath: value === 'all' ? '' : value }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Select Panchayath" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Panchayaths</SelectItem>
+                <SelectItem value="all">All Panchayaths</SelectItem>
                 {panchayaths.map((panchayath) => (
                   <SelectItem key={panchayath.id} value={panchayath.name}>
                     {panchayath.name}
@@ -282,12 +282,12 @@ export default function AgentPointsStats() {
               </SelectContent>
             </Select>
 
-            <Select value={filters.role} onValueChange={(value) => setFilters(prev => ({ ...prev, role: value }))}>
+            <Select value={filters.role} onValueChange={(value) => setFilters(prev => ({ ...prev, role: value === 'all' ? '' : value }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Select Role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Roles</SelectItem>
+                <SelectItem value="all">All Roles</SelectItem>
                 {roles.map((role) => (
                   <SelectItem key={role.value} value={role.value}>
                     {role.label}
