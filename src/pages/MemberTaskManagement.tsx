@@ -9,6 +9,7 @@ import { CheckSquare, Clock, CheckCircle, AlertCircle, Eye, Plus, ListTodo, User
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AddTaskForm } from '@/components/AddTaskForm';
+import { useAuth } from '@/components/AuthProvider';
 
 interface Task {
   id: string;
@@ -27,11 +28,58 @@ const MemberTaskManagement = () => {
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
+  const [isTeamMember, setIsTeamMember] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchUserTasks();
+    checkUserRole();
   }, []);
+
+  const checkUserRole = async () => {
+    try {
+      // Check if user is admin
+      if (user && (user.role === 'super_admin' || user.role === 'local_admin' || user.role === 'user_admin')) {
+        setIsTeamMember(true);
+        return;
+      }
+
+      // Check if user is a team member
+      if (user && user.role === 'team_member') {
+        setIsTeamMember(true);
+        return;
+      }
+
+      // Check if member user is part of any team
+      const memberUser = localStorage.getItem('member_user');
+      if (memberUser) {
+        const userData = JSON.parse(memberUser);
+        
+        // Get agent ID for this member
+        const { data: agentData, error: agentError } = await supabase
+          .from('agents')
+          .select('id')
+          .eq('phone', userData.mobileNumber)
+          .single();
+
+        if (agentData && !agentError) {
+          // Check if this agent is part of any management team
+          const { data: teamMemberData, error: teamError } = await supabase
+            .from('management_team_members')
+            .select('team_id')
+            .eq('agent_id', agentData.id)
+            .single();
+
+          if (teamMemberData && !teamError) {
+            setIsTeamMember(true);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking user role:', error);
+    }
+  };
 
   const fetchUserTasks = async () => {
     try {
@@ -245,20 +293,22 @@ const MemberTaskManagement = () => {
             <p className="text-muted-foreground mt-2">Manage your tasks efficiently</p>
           </div>
           
-          <Dialog open={isAddTaskOpen} onOpenChange={setIsAddTaskOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Task
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Create New Task</DialogTitle>
-              </DialogHeader>
-              <AddTaskForm />
-            </DialogContent>
-          </Dialog>
+          {isTeamMember && (
+            <Dialog open={isAddTaskOpen} onOpenChange={setIsAddTaskOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Task
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Create New Task</DialogTitle>
+                </DialogHeader>
+                <AddTaskForm />
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
