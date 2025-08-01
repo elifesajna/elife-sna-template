@@ -40,6 +40,13 @@ const MemberTaskManagement = () => {
   const checkUserRole = async () => {
     try {
       // Check if user is admin
+      const adminUser = localStorage.getItem('adminUser');
+      if (adminUser) {
+        setIsTeamMember(true);
+        return;
+      }
+
+      // Check if user is authenticated via AuthProvider
       if (user && (user.role === 'super_admin' || user.role === 'local_admin' || user.role === 'user_admin')) {
         setIsTeamMember(true);
         return;
@@ -61,7 +68,7 @@ const MemberTaskManagement = () => {
           .from('agents')
           .select('id')
           .eq('phone', userData.mobileNumber)
-          .single();
+          .maybeSingle();
 
         if (agentData && !agentError) {
           // Check if this agent is part of any management team
@@ -74,6 +81,27 @@ const MemberTaskManagement = () => {
           if (teamMemberData && !teamError) {
             setIsTeamMember(true);
           }
+        } else {
+          // Try name + panchayath match as fallback
+          const { data: nameMatch, error: nameError } = await supabase
+            .from('agents')
+            .select('id')
+            .eq('name', userData.name)
+            .eq('panchayath_id', userData.panchayath_id)
+            .maybeSingle();
+
+          if (nameMatch && !nameError) {
+            // Check if this agent is part of any management team
+            const { data: teamMemberData, error: teamError } = await supabase
+              .from('management_team_members')
+              .select('team_id')
+              .eq('agent_id', nameMatch.id)
+              .single();
+
+            if (teamMemberData && !teamError) {
+              setIsTeamMember(true);
+            }
+          }
         }
       }
     } catch (error) {
@@ -83,40 +111,74 @@ const MemberTaskManagement = () => {
 
   const fetchUserTasks = async () => {
     try {
-      // Get current member user from localStorage
+      // Check for admin user first
+      const adminUser = localStorage.getItem('adminUser');
       const memberUser = localStorage.getItem('member_user');
-      if (!memberUser) {
+      
+      if (!adminUser && !memberUser) {
         toast({
           title: "Error",
-          description: "Please login as a member to view tasks",
+          description: "Please login to view tasks",
           variant: "destructive",
         });
         return;
       }
 
-      const userData = JSON.parse(memberUser);
-      
-      // Get agent ID for this member
-      const { data: agentData, error: agentError } = await supabase
-        .from('agents')
-        .select('id')
-        .eq('phone', userData.mobileNumber)
-        .single();
+      let tasksQuery = supabase.from('tasks').select('*');
 
-      if (agentError || !agentData) {
-        console.error('Error finding agent:', agentError);
-        setTasks([]);
+      // If admin user, show all tasks
+      if (adminUser) {
+        const { data, error } = await tasksQuery.order('created_at', { ascending: false });
+        if (error) throw error;
+        setTasks(data || []);
         return;
       }
 
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('allocated_to_agent', agentData.id)
-        .order('created_at', { ascending: false });
+      // If member user, show only their tasks
+      if (memberUser) {
+        const userData = JSON.parse(memberUser);
+        
+        // Get agent ID for this member
+        const { data: agentData, error: agentError } = await supabase
+          .from('agents')
+          .select('id')
+          .eq('phone', userData.mobileNumber)
+          .maybeSingle();
 
-      if (error) throw error;
-      setTasks(data || []);
+        if (agentError || !agentData) {
+          // Try name + panchayath match as fallback
+          const { data: nameMatch, error: nameError } = await supabase
+            .from('agents')
+            .select('id')
+            .eq('name', userData.name)
+            .eq('panchayath_id', userData.panchayath_id)
+            .maybeSingle();
+
+          if (nameMatch && !nameError) {
+            const { data, error } = await supabase
+              .from('tasks')
+              .select('*')
+              .eq('allocated_to_agent', nameMatch.id)
+              .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            setTasks(data || []);
+          } else {
+            console.error('Error finding agent:', agentError || nameError);
+            setTasks([]);
+          }
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('*')
+          .eq('allocated_to_agent', agentData.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setTasks(data || []);
+      }
     } catch (error) {
       console.error('Error fetching tasks:', error);
       toast({
