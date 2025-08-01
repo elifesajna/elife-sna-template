@@ -1,10 +1,10 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { LogOut, Shield, Home } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LogOut, Shield, Home, 
+  Users, UserCheck, Building2, CheckSquare, Award, 
+  FileText, Bell, Settings, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { AdminSidebar } from "@/components/AdminSidebar";
 import { AdminAuthProvider, useAdminAuth } from "@/components/AdminAuthProvider";
 import AdminLogin from "@/components/AdminLogin";
 import { AdminDashboard } from "@/components/AdminDashboard";
@@ -21,81 +21,267 @@ import AgentPointsPage from "@/pages/AgentPointsPage";
 
 const AdminPanelContent = () => {
   const { adminUser, logout } = useAdminAuth();
+  const [activeView, setActiveView] = useState<string | null>(null);
 
   if (!adminUser) {
     return <AdminLogin />;
   }
 
-  return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50">
-        <AdminSidebar />
-        
-        <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
-            <div className="flex items-center gap-4">
-              <SidebarTrigger className="lg:hidden" />
-              <div className="flex items-center gap-2">
-                <Shield className="h-6 w-6 text-primary" />
-                <h1 className="text-xl font-semibold text-gray-900">Admin Panel</h1>
-              </div>
+  const adminCards = [
+    {
+      id: 'dashboard',
+      title: 'Dashboard',
+      description: 'System overview and statistics',
+      icon: BarChart3,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      component: <AdminDashboard />
+    },
+    {
+      id: 'users',
+      title: 'User Management',
+      description: 'Manage system users and agents',
+      icon: Users,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      component: <UserManagement />
+    },
+    {
+      id: 'approvals',
+      title: 'User Approvals',
+      description: 'Review pending user registrations',
+      icon: UserCheck,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      component: <MemberApprovals />
+    },
+    {
+      id: 'teams',
+      title: 'Team Management',
+      description: 'Manage teams and assignments',
+      icon: Building2,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      component: <TeamManagement />
+    },
+    {
+      id: 'tasks',
+      title: 'Task Management',
+      description: 'Create and monitor tasks',
+      icon: CheckSquare,
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-50',
+      component: <EnhancedTaskManagement />
+    },
+    {
+      id: 'points',
+      title: 'Agent Points',
+      description: 'Manage agent point system',
+      icon: Award,
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-50',
+      component: <AgentPointsPage />
+    },
+    {
+      id: 'panchayaths',
+      title: 'Panchayaths',
+      description: 'Manage panchayath data',
+      icon: Building2,
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50',
+      component: <PanchayathManagement />
+    },
+    {
+      id: 'reports',
+      title: 'Reports',
+      description: 'Generate system reports',
+      icon: FileText,
+      color: 'text-pink-600',
+      bgColor: 'bg-pink-50',
+      component: <AdminReports />
+    },
+    {
+      id: 'notifications',
+      title: 'Notifications',
+      description: 'System notifications',
+      icon: Bell,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
+      component: <AdminNotifications />
+    }
+  ];
+
+  // Add restricted cards for super admin only
+  if (adminUser.role === 'super_admin') {
+    adminCards.push(
+      {
+        id: 'permissions',
+        title: 'Permissions',
+        description: 'Manage user permissions',
+        icon: Shield,
+        color: 'text-gray-600',
+        bgColor: 'bg-gray-50',
+        component: <AdminPermissions />
+      },
+      {
+        id: 'settings',
+        title: 'Settings',
+        description: 'System configuration',
+        icon: Settings,
+        color: 'text-slate-600',
+        bgColor: 'bg-slate-50',
+        component: <AdminSettings />
+      }
+    );
+  }
+
+  if (activeView) {
+    const selectedCard = adminCards.find(card => card.id === activeView);
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setActiveView(null)}
+              className="flex items-center gap-2"
+            >
+              ← Back to Cards
+            </Button>
+            <div className="flex items-center gap-2">
+              <Shield className="h-6 w-6 text-primary" />
+              <h1 className="text-xl font-semibold text-gray-900">
+                {selectedCard?.title}
+              </h1>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Welcome,</span>
+              <span className="font-medium text-gray-900">{adminUser.username}</span>
+              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                {adminUser.role}
+              </span>
             </div>
             
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Welcome,</span>
-                <span className="font-medium text-gray-900">{adminUser.username}</span>
-                <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                  {adminUser.role}
-                </span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Link to="/">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <Home className="h-4 w-4" />
-                    Home
-                  </Button>
-                </Link>
-                
+            <div className="flex items-center gap-2">
+              <Link to="/">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  onClick={logout}
                   className="flex items-center gap-2"
                 >
-                  <LogOut className="h-4 w-4" />
-                  Logout
+                  <Home className="h-4 w-4" />
+                  Home
                 </Button>
-              </div>
+              </Link>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={logout}
+                className="flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
             </div>
-          </header>
+          </div>
+        </header>
 
-          {/* Main Content */}
-          <main className="flex-1 overflow-auto">
-            <Routes>
-              <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
-              <Route path="/dashboard" element={<AdminDashboard />} />
-              <Route path="/users" element={<UserManagement />} />
-              <Route path="/approvals" element={<MemberApprovals />} />
-              <Route path="/teams" element={<TeamManagement />} />
-              <Route path="/tasks" element={<EnhancedTaskManagement />} />
-              <Route path="/panchayaths" element={<PanchayathManagement />} />
-              <Route path="/permissions" element={<AdminPermissions />} />
-              <Route path="/points" element={<AgentPointsPage />} />
-              <Route path="/reports" element={<AdminReports />} />
-              <Route path="/notifications" element={<AdminNotifications />} />
-              <Route path="/settings" element={<AdminSettings />} />
-            </Routes>
-          </main>
-        </div>
+        {/* Content */}
+        <main className="flex-1">
+          {selectedCard?.component}
+        </main>
       </div>
-    </SidebarProvider>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Shield className="h-6 w-6 text-primary" />
+          <h1 className="text-xl font-semibold text-gray-900">Admin Panel</h1>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Welcome,</span>
+            <span className="font-medium text-gray-900">{adminUser.username}</span>
+            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+              {adminUser.role}
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Link to="/">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Home className="h-4 w-4" />
+                Home
+              </Button>
+            </Link>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={logout}
+              className="flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content - Card Grid */}
+      <main className="p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h2>
+            <p className="text-gray-600">Select a module to manage system functions</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {adminCards.map((card) => (
+              <Card 
+                key={card.id} 
+                className="hover:shadow-lg transition-all duration-200 cursor-pointer group hover:scale-105"
+                onClick={() => setActiveView(card.id)}
+              >
+                <CardHeader className="text-center">
+                  <div className={`mx-auto p-4 rounded-full ${card.bgColor} mb-4 group-hover:scale-110 transition-transform`}>
+                    <card.icon className={`h-8 w-8 ${card.color}`} />
+                  </div>
+                  <CardTitle className="text-lg">{card.title}</CardTitle>
+                  <CardDescription className="text-sm">
+                    {card.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="w-full group-hover:bg-primary group-hover:text-white transition-colors"
+                  >
+                    Open Module
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </main>
+    </div>
   );
 };
 
