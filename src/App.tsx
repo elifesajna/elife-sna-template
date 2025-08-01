@@ -12,6 +12,7 @@ import NotFound from './pages/NotFound';
 
 import MembersLogin from './pages/MembersLogin';
 import MemberDashboard from './pages/MemberDashboard';
+import TeamPage from './pages/TeamPage';
 import { AuthProvider } from './components/AuthProvider';
 import { AdminAuthProvider } from './components/AdminAuthProvider';
 import AdminPanel from './pages/AdminPanel';
@@ -41,6 +42,7 @@ function App() {
               <Route path="/admin/*" element={<AdminPanel />} />
               <Route path="/members" element={<MembersLogin />} />
               <Route path="/member-dashboard" element={<MemberDashboard />} />
+              <Route path="/team" element={<TeamPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster />

@@ -53,10 +53,7 @@ interface TaskRemark {
 export default function MemberDashboard() {
   const [memberUser, setMemberUser] = useState<any>(null);
   const [personalTasks, setPersonalTasks] = useState<Task[]>([]);
-  const [teamTasks, setTeamTasks] = useState<Task[]>([]);
   const [teamMemberships, setTeamMemberships] = useState<TeamMember[]>([]);
-  const [allTeamMembers, setAllTeamMembers] = useState<TeamMember[]>([]);
-  const [taskRemarks, setTaskRemarks] = useState<TaskRemark[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Dialog states
@@ -145,7 +142,6 @@ export default function MemberDashboard() {
       setPersonalTasks(personalTasksData || []);
 
       // Check team memberships for this agent (reuse agentData from above)
-
       let teamMemberData = [];
       if (agentData && !agentError) {
         const { data: teamMemberQueryData, error: teamMemberError } = await supabase
@@ -161,47 +157,6 @@ export default function MemberDashboard() {
       }
 
       setTeamMemberships(teamMemberData);
-
-      // Fetch team tasks and related info if user is a team member
-      if (teamMemberData && teamMemberData.length > 0) {
-        const teamIds = teamMemberData.map(tm => tm.team_id);
-        
-        // Fetch team tasks
-        const { data: teamTasksData, error: teamTasksError } = await supabase
-          .from('tasks')
-          .select('*')
-          .eq('allocated_to_team', teamIds[0]) // For now, just check first team
-          .order('created_at', { ascending: false });
-
-        if (teamTasksError) throw teamTasksError;
-        setTeamTasks(teamTasksData || []);
-
-        // Fetch all team members for the teams this user belongs to
-        const { data: allTeamMembersData, error: allTeamMembersError } = await supabase
-          .from('management_team_members')
-          .select(`
-            *,
-            management_teams(name, description),
-            agents(name, phone, role)
-          `)
-          .in('team_id', teamIds);
-
-        if (allTeamMembersError) throw allTeamMembersError;
-        setAllTeamMembers(allTeamMembersData || []);
-
-        // Fetch task remarks for team tasks
-        if (teamTasksData && teamTasksData.length > 0) {
-          const taskIds = teamTasksData.map(task => task.id);
-          const { data: remarksData, error: remarksError } = await supabase
-            .from('task_remarks')
-            .select('*')
-            .in('task_id', taskIds)
-            .order('created_at', { ascending: false });
-
-          if (remarksError) throw remarksError;
-          setTaskRemarks(remarksData || []);
-        }
-      }
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
@@ -470,8 +425,8 @@ export default function MemberDashboard() {
                     <div className="text-2xl font-bold text-green-800">{completedPersonalTasks.length}</div>
                   </div>
                   <div className="bg-blue-50 p-3 rounded-lg">
-                    <div className="text-sm text-blue-600">Team Tasks</div>
-                    <div className="text-2xl font-bold text-blue-800">{teamTasks.length}</div>
+                    <div className="text-sm text-blue-600">Team Membership</div>
+                    <div className="text-2xl font-bold text-blue-800">{teamMemberships.length > 0 ? 'Yes' : 'No'}</div>
                   </div>
                 </div>
               </div>
@@ -479,22 +434,41 @@ export default function MemberDashboard() {
           </CardContent>
         </Card>
 
-        {/* Dashboard Tabs */}
-        <Tabs defaultValue="personal" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 h-auto p-1">
-            <TabsTrigger value="personal" className="flex items-center gap-2 text-xs sm:text-sm py-2 sm:py-3">
-              <User className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Personal Tasks</span>
-              <span className="sm:hidden">Personal</span>
-            </TabsTrigger>
-            <TabsTrigger value="team" className="flex items-center gap-2 text-xs sm:text-sm py-2 sm:py-3">
-              <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Team Tasks</span>
-              <span className="sm:hidden">Team</span>
-            </TabsTrigger>
-          </TabsList>
+        {/* Team Access Button */}
+        {teamMemberships.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Team Access
+              </CardTitle>
+              <CardDescription>
+                Access your team management area
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/team">
+                <Button className="w-full sm:w-auto">
+                  <Users className="h-4 w-4 mr-2" />
+                  Go to Team Page
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
 
-          <TabsContent value="personal" className="mt-4 sm:mt-6">
+        {/* Personal Tasks */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Personal Tasks
+            </CardTitle>
+            <CardDescription>
+              Tasks specifically assigned to you
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
             <Tabs defaultValue="pending" className="w-full">
               <TabsList className="grid w-full grid-cols-2 h-auto p-1">
                 <TabsTrigger value="pending" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
@@ -664,163 +638,8 @@ export default function MemberDashboard() {
                 </Card>
               </TabsContent>
             </Tabs>
-          </TabsContent>
-
-          <TabsContent value="team" className="mt-4 sm:mt-6">
-            {teamMemberships.length === 0 ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Team Tasks</CardTitle>
-                  <CardDescription>
-                    You are not a Team Member
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Alert>
-                    <AlertDescription>
-                      You are not a team member. Contact your administrator to be added to a team.
-                    </AlertDescription>
-                  </Alert>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Team Tasks</CardTitle>
-                  <CardDescription>
-                    Tasks assigned to teams you are a member of
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {teamTasks.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    No team tasks found.
-                  </div>
-                  ) : (
-                    <div className="space-y-6">
-                       {/* Team Members Info */}
-                       <div className="mb-6">
-                         <h4 className="font-medium mb-3">Team Members:</h4>
-                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                           {allTeamMembers.map((member) => (
-                             <div key={member.id} className="bg-gray-50 p-3 rounded-lg">
-                               <div className="font-medium">{member.agents?.name}</div>
-                               <div className="text-sm text-gray-600">{member.agents?.phone}</div>
-                               <div className="text-xs text-gray-500">{member.agents?.role}</div>
-                               <Badge variant="outline" className="mt-1 text-xs">
-                                 {member.management_teams?.name}
-                               </Badge>
-                             </div>
-                           ))}
-                         </div>
-                       </div>
-
-                       {/* Team Tasks */}
-                       <div className="overflow-x-auto">
-                         <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Title</TableHead>
-                                <TableHead>Description</TableHead>
-                                <TableHead>Priority</TableHead>
-                                <TableHead>Due Date</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Created</TableHead>
-                                <TableHead>Remarks</TableHead>
-                                <TableHead>Actions</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                           <TableBody>
-                             {teamTasks.map((task) => (
-                               <TableRow key={task.id}>
-                                 <TableCell className="font-medium">{task.title}</TableCell>
-                                 <TableCell className="max-w-xs truncate">{task.description || 'No description'}</TableCell>
-                                 <TableCell>
-                                   <Badge className={getPriorityColor(task.priority)}>
-                                     {task.priority}
-                                   </Badge>
-                                 </TableCell>
-                                 <TableCell>
-                                   {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}
-                                 </TableCell>
-                                 <TableCell>
-                                   <Badge className={getStatusColor(task.status)}>
-                                     {task.status}
-                                   </Badge>
-                                 </TableCell>
-                                 <TableCell>
-                                   {new Date(task.created_at).toLocaleDateString()}
-                                 </TableCell>
-                                 <TableCell>
-                                   <div className="space-y-1">
-                                     {taskRemarks
-                                       .filter(remark => remark.task_id === task.id)
-                                       .map((remark) => (
-                                         <div key={remark.id} className="bg-blue-50 p-2 rounded text-xs">
-                                           <div className="font-medium">{remark.updated_by}</div>
-                                           <div className="text-gray-700">{remark.remark}</div>
-                                           <div className="text-xs text-gray-500">
-                                             {new Date(remark.created_at).toLocaleDateString()}
-                                           </div>
-                                         </div>
-                                       ))}
-                                     {taskRemarks.filter(remark => remark.task_id === task.id).length === 0 && (
-                                       <span className="text-gray-400 text-xs">No remarks</span>
-                                     )}
-                                   </div>
-                                  </TableCell>
-                                  <TableCell>
-                                    <div className="flex gap-1 flex-wrap">
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => fetchTaskRemarks(task)}
-                                        className="h-8 px-2 text-xs"
-                                      >
-                                        <Eye className="h-3 w-3" />
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => openRemarksDialog(task)}
-                                        className="h-8 px-2 text-xs"
-                                      >
-                                        <MessageSquare className="h-3 w-3" />
-                                      </Button>
-                                      {task.status === 'pending' && (
-                                        <>
-                                          <Button
-                                            size="sm"
-                                            variant="default"
-                                            onClick={() => openRemarksDialog(task, 'completed')}
-                                            className="bg-green-600 hover:bg-green-700 h-8 px-2 text-xs"
-                                          >
-                                            <CheckCircle className="h-3 w-3" />
-                                          </Button>
-                                          <Button
-                                            size="sm"
-                                            variant="destructive"
-                                            onClick={() => openRemarksDialog(task, 'cancelled')}
-                                            className="h-8 px-2 text-xs"
-                                          >
-                                            <XCircle className="h-3 w-3" />
-                                          </Button>
-                                        </>
-                                      )}
-                                    </div>
-                                  </TableCell>
-                               </TableRow>
-                             ))}
-                           </TableBody>
-                         </Table>
-                       </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
+          </CardContent>
+        </Card>
       </main>
 
       {/* Remarks Dialog */}
