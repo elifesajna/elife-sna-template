@@ -49,19 +49,9 @@ export const DailyActivityLog = () => {
     if (savedSettings) {
       const settings = JSON.parse(savedSettings);
       const roleSetting = settings.find((setting: any) => setting.role === agentRole);
-      return roleSetting ? roleSetting.points_per_activity : 10;
+      return roleSetting ? roleSetting.points_per_activity : 0;
     }
-    // Default points based on role if no settings found
-    const defaultPoints: { [key: string]: number } = {
-      'Block Coordinator': 50,
-      'District Coordinator': 40,
-      'State Coordinator': 30,
-      'Panchayath Secretary': 25,
-      'ASHA Worker': 20,
-      'Anganwadi Worker': 15,
-      'Village Volunteer': 10
-    };
-    return defaultPoints[agentRole] || 10;
+    return 0;
   };
 
   const calculateMonthlyPoints = (activitiesData: DailyActivity[], agentRole: string) => {
