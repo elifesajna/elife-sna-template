@@ -14,6 +14,82 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_permissions: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          permission_name: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          permission_name: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          permission_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      admin_role_permissions: {
+        Row: {
+          admin_user_id: string
+          created_at: string
+          granted_by: string | null
+          id: string
+          permission_id: string
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          permission_id: string
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          permission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_role_permissions_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_role_permissions_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_role_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "admin_permissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_users: {
         Row: {
           created_at: string
