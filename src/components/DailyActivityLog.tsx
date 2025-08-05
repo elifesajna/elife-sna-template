@@ -43,10 +43,28 @@ export const DailyActivityLog = () => {
     toast
   } = useToast();
 
-  // Calculate points for daily activity (10 points per activity)
-  const POINTS_PER_ACTIVITY = 10;
+  // Get points per activity from admin settings
+  const getPointsPerActivity = (agentRole: string) => {
+    const savedSettings = localStorage.getItem('pointSettings');
+    if (savedSettings) {
+      const settings = JSON.parse(savedSettings);
+      const roleSetting = settings.find((setting: any) => setting.role === agentRole);
+      return roleSetting ? roleSetting.points_per_activity : 10;
+    }
+    // Default points based on role if no settings found
+    const defaultPoints: { [key: string]: number } = {
+      'Block Coordinator': 50,
+      'District Coordinator': 40,
+      'State Coordinator': 30,
+      'Panchayath Secretary': 25,
+      'ASHA Worker': 20,
+      'Anganwadi Worker': 15,
+      'Village Volunteer': 10
+    };
+    return defaultPoints[agentRole] || 10;
+  };
 
-  const calculateMonthlyPoints = (activitiesData: DailyActivity[]) => {
+  const calculateMonthlyPoints = (activitiesData: DailyActivity[], agentRole: string) => {
     const currentMonth = startOfMonth(new Date());
     const currentMonthEnd = endOfMonth(new Date());
     
@@ -55,7 +73,7 @@ export const DailyActivityLog = () => {
       return activityDate >= currentMonth && activityDate <= currentMonthEnd;
     });
     
-    return monthlyActivities.length * POINTS_PER_ACTIVITY;
+    return monthlyActivities.length * getPointsPerActivity(agentRole);
   };
   const resetForm = () => {
     setStep('mobile');
@@ -196,7 +214,8 @@ export const DailyActivityLog = () => {
         if (error) throw error;
         
         // Show points earned popup for new activities
-        setEarnedPoints(POINTS_PER_ACTIVITY);
+        const pointsEarned = getPointsPerActivity(currentAgent.role);
+        setEarnedPoints(pointsEarned);
         setShowPointsPopup(true);
         
         toast({
@@ -215,7 +234,7 @@ export const DailyActivityLog = () => {
           .order('activity_date', { ascending: false });
         
         if (updatedActivities.data) {
-          setMonthlyTotal(calculateMonthlyPoints(updatedActivities.data));
+          setMonthlyTotal(calculateMonthlyPoints(updatedActivities.data, currentAgent.role));
         }
       }
       
@@ -262,7 +281,7 @@ export const DailyActivityLog = () => {
               <p className="text-sm font-medium text-muted-foreground">Monthly Total</p>
               <p className="text-2xl font-bold text-primary">{monthlyTotal} Points</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {Math.floor(monthlyTotal / POINTS_PER_ACTIVITY)} activities this month
+                {currentAgent ? Math.floor(monthlyTotal / getPointsPerActivity(currentAgent.role)) : 0} activities this month
               </p>
             </div>
           </div>
