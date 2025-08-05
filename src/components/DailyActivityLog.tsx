@@ -7,8 +7,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Clock, User, Phone } from "lucide-react";
-import { format, parseISO, isBefore, startOfToday } from "date-fns";
+import { CalendarDays, Clock, User, Phone, Trophy, Star } from "lucide-react";
+import { format, parseISO, isBefore, startOfToday, startOfMonth, endOfMonth } from "date-fns";
 import { typedSupabase, TABLES } from "@/lib/supabase-utils";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -36,9 +36,27 @@ export const DailyActivityLog = () => {
   const [activityText, setActivityText] = useState('');
   const [activities, setActivities] = useState<DailyActivity[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showPointsPopup, setShowPointsPopup] = useState(false);
+  const [earnedPoints, setEarnedPoints] = useState(0);
+  const [monthlyTotal, setMonthlyTotal] = useState(0);
   const {
     toast
   } = useToast();
+
+  // Calculate points for daily activity (10 points per activity)
+  const POINTS_PER_ACTIVITY = 10;
+
+  const calculateMonthlyPoints = (activitiesData: DailyActivity[]) => {
+    const currentMonth = startOfMonth(new Date());
+    const currentMonthEnd = endOfMonth(new Date());
+    
+    const monthlyActivities = activitiesData.filter(activity => {
+      const activityDate = parseISO(activity.activity_date);
+      return activityDate >= currentMonth && activityDate <= currentMonthEnd;
+    });
+    
+    return monthlyActivities.length * POINTS_PER_ACTIVITY;
+  };
   const resetForm = () => {
     setStep('mobile');
     setMobileNumber('');
@@ -176,12 +194,31 @@ export const DailyActivityLog = () => {
           activity_description: activityText
         }]);
         if (error) throw error;
+        
+        // Show points earned popup for new activities
+        setEarnedPoints(POINTS_PER_ACTIVITY);
+        setShowPointsPopup(true);
+        
         toast({
           title: "Success",
           description: "Activity saved successfully"
         });
       }
       await fetchActivities(currentAgent.id);
+      
+      // Calculate monthly total after fetching updated activities
+      if (!existingActivity) {
+        const updatedActivities = await typedSupabase
+          .from(TABLES.DAILY_ACTIVITIES)
+          .select('*')
+          .eq('agent_id', currentAgent.id)
+          .order('activity_date', { ascending: false });
+        
+        if (updatedActivities.data) {
+          setMonthlyTotal(calculateMonthlyPoints(updatedActivities.data));
+        }
+      }
+      
       setStep('history');
     } catch (error) {
       console.error('Error saving activity:', error);
@@ -198,6 +235,45 @@ export const DailyActivityLog = () => {
   yesterday.setDate(yesterday.getDate() - 1);
   const isPastDate = selectedDate && isBefore(selectedDate, yesterday);
   const isReadOnly = isPastDate;
+
+  // Points Popup Component
+  const PointsPopup = () => (
+    <Dialog open={showPointsPopup} onOpenChange={setShowPointsPopup}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-center flex items-center justify-center gap-2">
+            <Trophy className="h-6 w-6 text-yellow-500" />
+            Congratulations!
+          </DialogTitle>
+        </DialogHeader>
+        <div className="text-center space-y-4 py-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-center gap-2">
+              <Star className="h-5 w-5 text-yellow-500" />
+              <span className="text-lg font-semibold">+{earnedPoints} Points Earned!</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Great job logging your daily activity!
+            </p>
+          </div>
+          
+          <div className="bg-primary/10 rounded-lg p-4">
+            <div className="text-center">
+              <p className="text-sm font-medium text-muted-foreground">Monthly Total</p>
+              <p className="text-2xl font-bold text-primary">{monthlyTotal} Points</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {Math.floor(monthlyTotal / POINTS_PER_ACTIVITY)} activities this month
+              </p>
+            </div>
+          </div>
+          
+          <Button onClick={() => setShowPointsPopup(false)} className="w-full">
+            Continue
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
   return <Dialog open={isOpen} onOpenChange={open => {
     setIsOpen(open);
     if (!open) resetForm();
@@ -342,5 +418,6 @@ export const DailyActivityLog = () => {
             </Button>
           </div>}
       </DialogContent>
+      <PointsPopup />
     </Dialog>;
 };
