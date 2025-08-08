@@ -98,6 +98,7 @@ export const DailyActivityLog = () => {
       }
       setCurrentAgent(data);
       await fetchActivities(data.id);
+      await ensureYesterdayLeaveIfMissing(data);
       setStep('calendar');
     } catch (error) {
       console.error('Error finding agent:', error);
@@ -124,6 +125,44 @@ export const DailyActivityLog = () => {
       console.error('Error fetching activities:', error);
     }
   };
+  
+  // Ensure yesterday is marked as leave if no activity exists
+  const ensureYesterdayLeaveIfMissing = async (agent: Agent) => {
+    try {
+      const y = new Date();
+      y.setDate(y.getDate() - 1);
+      const yesterdayStr = format(y, 'yyyy-MM-dd');
+
+      const { data: existing, error: existError } = await typedSupabase
+        .from(TABLES.DAILY_ACTIVITIES)
+        .select('id')
+        .eq('agent_id', agent.id)
+        .eq('activity_date', yesterdayStr)
+        .maybeSingle();
+
+      if (existError && existError.code !== 'PGRST116') {
+        throw existError;
+      }
+
+      if (!existing) {
+        const { error: insertError } = await typedSupabase.from(TABLES.DAILY_ACTIVITIES).insert([
+          {
+            agent_id: agent.id,
+            mobile_number: mobileNumber || agent.phone,
+            activity_date: yesterdayStr,
+            activity_description: 'Leave'
+          }
+        ]);
+        if (insertError) throw insertError;
+
+        // Refresh activities to reflect the new leave record
+        await fetchActivities(agent.id);
+      }
+    } catch (e) {
+      console.error('Error ensuring leave for yesterday:', e);
+    }
+  };
+
   const getDateColor = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const hasActivity = activities.some(activity => activity.activity_date === dateStr);
