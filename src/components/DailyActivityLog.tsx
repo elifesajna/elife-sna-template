@@ -99,14 +99,24 @@ export const DailyActivityLog = () => {
       setCurrentAgent(data);
       console.log('Found agent:', data.name, 'Current date auto-selected:', format(new Date(), 'yyyy-MM-dd'));
       
-      await fetchActivities(data.id);
+      const activitiesData = await fetchActivities(data.id);
       await ensureYesterdayLeaveIfMissing(data);
       
-      // Auto-select today's date when moving to calendar step
+      // Auto-select today's date and go directly to activity entry
       const today = new Date();
       setSelectedDate(today);
-      console.log('Calendar step - today selected:', format(today, 'yyyy-MM-dd'));
-      setStep('calendar');
+      console.log('Activity step - today selected:', format(today, 'yyyy-MM-dd'));
+      
+      // Check if today already has activity
+      const todayStr = format(today, 'yyyy-MM-dd');
+      const existingActivity = activitiesData.find(activity => activity.activity_date === todayStr);
+      if (existingActivity) {
+        setActivityText(existingActivity.activity_description);
+      } else {
+        setActivityText('');
+      }
+      
+      setStep('activity');
     } catch (error) {
       console.error('Error finding agent:', error);
       toast({
@@ -128,8 +138,10 @@ export const DailyActivityLog = () => {
       });
       if (error) throw error;
       setActivities(data || []);
+      return data || [];
     } catch (error) {
       console.error('Error fetching activities:', error);
+      return [];
     }
   };
   
@@ -433,6 +445,30 @@ export const DailyActivityLog = () => {
           </div>}
 
         {step === 'activity' && selectedDate && <div className="space-y-4">
+            {currentAgent && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Agent Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Name:</span> {currentAgent.name}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      <span className="font-medium">Phone:</span> {currentAgent.phone}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{currentAgent.role}</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             <div>
               <Label>
                 Activity for {format(selectedDate, 'PPP')}
@@ -441,8 +477,9 @@ export const DailyActivityLog = () => {
               <Textarea value={activityText} onChange={e => setActivityText(e.target.value)} placeholder={isReadOnly ? "No activity recorded" : "Describe your daily activities..."} rows={6} className="mt-2" readOnly={isReadOnly} />
             </div>
             <div className="flex gap-2">
-              <Button onClick={() => setStep('calendar')} variant="outline">
-                Back to Calendar
+              <Button onClick={() => setStep('calendar')} variant="outline" className="gap-2">
+                <CalendarDays className="h-4 w-4" />
+                View Calendar
               </Button>
               {!isReadOnly && <Button onClick={saveActivity} disabled={loading} className="flex-1">
                   {loading ? "Saving..." : "Save Activity"}
