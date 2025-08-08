@@ -99,6 +99,9 @@ export const DailyActivityLog = () => {
       setCurrentAgent(data);
       await fetchActivities(data.id);
       await ensureYesterdayLeaveIfMissing(data);
+      
+      // Auto-select today's date when moving to calendar step
+      setSelectedDate(new Date());
       setStep('calendar');
     } catch (error) {
       console.error('Error finding agent:', error);
@@ -385,28 +388,36 @@ export const DailyActivityLog = () => {
                 No activity (past dates)
               </div>
               <div className="flex justify-center mt-2">
-                <Calendar mode="single" selected={selectedDate} onSelect={handleDateSelect} className="rounded-md border pointer-events-auto" modifiers={{
-              hasActivity: date => {
-                const dateStr = format(date, 'yyyy-MM-dd');
-                return activities.some(activity => activity.activity_date === dateStr);
-              },
-              noActivity: date => {
-                const dateStr = format(date, 'yyyy-MM-dd');
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                const isPast = isBefore(date, yesterday);
-                return isPast && !activities.some(activity => activity.activity_date === dateStr);
-              }
-            }} modifiersStyles={{
-              hasActivity: {
-                backgroundColor: '#dcfce7',
-                color: '#166534'
-              },
-              noActivity: {
-                backgroundColor: '#fecaca',
-                color: '#991b1b'
-              }
-            }} />
+                <Calendar 
+                  mode="single" 
+                  selected={selectedDate} 
+                  onSelect={handleDateSelect} 
+                  className="rounded-md border pointer-events-auto" 
+                  defaultMonth={new Date()}
+                  modifiers={{
+                    hasActivity: date => {
+                      const dateStr = format(date, 'yyyy-MM-dd');
+                      return activities.some(activity => activity.activity_date === dateStr);
+                    },
+                    noActivity: date => {
+                      const dateStr = format(date, 'yyyy-MM-dd');
+                      const yesterday = new Date();
+                      yesterday.setDate(yesterday.getDate() - 1);
+                      const isPast = isBefore(date, yesterday);
+                      return isPast && !activities.some(activity => activity.activity_date === dateStr);
+                    }
+                  }} 
+                  modifiersStyles={{
+                    hasActivity: {
+                      backgroundColor: '#dcfce7',
+                      color: '#166534'
+                    },
+                    noActivity: {
+                      backgroundColor: '#fecaca',
+                      color: '#991b1b'
+                    }
+                  }} 
+                />
               </div>
             </div>
           </div>}
