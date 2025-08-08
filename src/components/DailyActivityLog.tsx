@@ -97,11 +97,15 @@ export const DailyActivityLog = () => {
         return;
       }
       setCurrentAgent(data);
+      console.log('Found agent:', data.name, 'Current date auto-selected:', format(new Date(), 'yyyy-MM-dd'));
+      
       await fetchActivities(data.id);
       await ensureYesterdayLeaveIfMissing(data);
       
       // Auto-select today's date when moving to calendar step
-      setSelectedDate(new Date());
+      const today = new Date();
+      setSelectedDate(today);
+      console.log('Calendar step - today selected:', format(today, 'yyyy-MM-dd'));
       setStep('calendar');
     } catch (error) {
       console.error('Error finding agent:', error);
@@ -132,9 +136,11 @@ export const DailyActivityLog = () => {
   // Ensure yesterday is marked as leave if no activity exists
   const ensureYesterdayLeaveIfMissing = async (agent: Agent) => {
     try {
-      const y = new Date();
-      y.setDate(y.getDate() - 1);
-      const yesterdayStr = format(y, 'yyyy-MM-dd');
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = format(yesterday, 'yyyy-MM-dd');
+      
+      console.log('Checking yesterday activities for:', yesterdayStr);
 
       const { data: existing, error: existError } = await typedSupabase
         .from(TABLES.DAILY_ACTIVITIES)
@@ -148,6 +154,7 @@ export const DailyActivityLog = () => {
       }
 
       if (!existing) {
+        console.log('No activity found for yesterday, creating Leave entry');
         const { error: insertError } = await typedSupabase.from(TABLES.DAILY_ACTIVITIES).insert([
           {
             agent_id: agent.id,
@@ -158,8 +165,11 @@ export const DailyActivityLog = () => {
         ]);
         if (insertError) throw insertError;
 
+        console.log('Leave entry created for yesterday');
         // Refresh activities to reflect the new leave record
         await fetchActivities(agent.id);
+      } else {
+        console.log('Activity already exists for yesterday:', existing.id);
       }
     } catch (e) {
       console.error('Error ensuring leave for yesterday:', e);
