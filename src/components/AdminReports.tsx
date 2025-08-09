@@ -7,6 +7,7 @@ import { FileText, TrendingUp, Users, Eye, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
+import AgentPerformanceDetails from "./AgentPerformanceDetails";
 
 interface AgentPerformanceData {
   panchayathId: string;
@@ -21,6 +22,7 @@ interface AgentPerformanceData {
 const AdminReports = () => {
   const [performanceData, setPerformanceData] = useState<AgentPerformanceData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedPanchayath, setSelectedPanchayath] = useState<{ id: string; name: string } | null>(null);
   const { toast } = useToast();
 
   const fetchAgentPerformance = async () => {
@@ -199,7 +201,12 @@ const AdminReports = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Button variant="outline" size="sm" className="gap-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="gap-1"
+                        onClick={() => setSelectedPanchayath({ id: item.panchayathId, name: item.panchayathName })}
+                      >
                         <Eye className="h-3 w-3" />
                         View Details
                       </Button>
@@ -211,6 +218,13 @@ const AdminReports = () => {
           )}
         </CardContent>
       </Card>
+
+      <AgentPerformanceDetails
+        isOpen={!!selectedPanchayath}
+        onClose={() => setSelectedPanchayath(null)}
+        panchayathId={selectedPanchayath?.id || ''}
+        panchayathName={selectedPanchayath?.name || ''}
+      />
     </div>
   );
 };
