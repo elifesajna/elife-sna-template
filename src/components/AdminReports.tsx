@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileText, TrendingUp, Users, Eye, Phone } from "lucide-react";
+import { FileText, TrendingUp, Users, Eye, Phone, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
@@ -23,9 +23,15 @@ const AdminReports = () => {
   const [performanceData, setPerformanceData] = useState<AgentPerformanceData[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedPanchayath, setSelectedPanchayath] = useState<{ id: string; name: string } | null>(null);
+  const [lastFetched, setLastFetched] = useState<Date | null>(null);
   const { toast } = useToast();
 
-  const fetchAgentPerformance = async () => {
+  const fetchAgentPerformance = useCallback(async (useCache = true) => {
+    // Check cache (5 minutes)
+    if (useCache && lastFetched && Date.now() - lastFetched.getTime() < 5 * 60 * 1000) {
+      return;
+    }
+
     setLoading(true);
     try {
       // Get current month boundaries
@@ -102,6 +108,12 @@ const AdminReports = () => {
       }
 
       setPerformanceData(performanceResults);
+      setLastFetched(new Date());
+      
+      toast({
+        title: "Success",
+        description: "Performance data updated successfully",
+      });
     } catch (error) {
       console.error('Error fetching agent performance:', error);
       toast({
@@ -112,11 +124,11 @@ const AdminReports = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast, lastFetched]);
 
   useEffect(() => {
-    fetchAgentPerformance();
-  }, []);
+    fetchAgentPerformance(true);
+  }, [fetchAgentPerformance]);
 
   const getPerformanceBadge = (percentage: number) => {
     if (percentage >= 80) return <Badge className="bg-green-100 text-green-800">Excellent</Badge>;
@@ -151,11 +163,19 @@ const AdminReports = () => {
         </CardHeader>
         <CardContent>
           <div className="flex justify-between items-center mb-4">
-            <div className="text-sm text-muted-foreground">
-              Performance calculated based on agents active in the last 3 days
+            <div className="space-y-1">
+              <div className="text-sm text-muted-foreground">
+                Performance calculated based on agents active in the last 3 days
+              </div>
+              {lastFetched && (
+                <div className="text-xs text-muted-foreground">
+                  Last updated: {format(lastFetched, 'PPp')}
+                </div>
+              )}
             </div>
-            <Button onClick={fetchAgentPerformance} disabled={loading}>
-              {loading ? "Loading..." : "Refresh Data"}
+            <Button onClick={() => fetchAgentPerformance(false)} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? "Refreshing..." : "Refresh Data"}
             </Button>
           </div>
 

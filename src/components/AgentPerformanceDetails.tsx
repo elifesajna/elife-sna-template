@@ -5,12 +5,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Users, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays } from "date-fns";
+import InactiveAgentsList from "./InactiveAgentsList";
 
 interface RolePerformance {
   role: string;
   totalAgents: number;
   activeAgents: number;
   performancePercentage: number;
+  inactiveAgents: number;
 }
 
 interface AgentPerformanceDetailsProps {
@@ -28,6 +30,8 @@ const AgentPerformanceDetails: React.FC<AgentPerformanceDetailsProps> = ({
 }) => {
   const [rolePerformance, setRolePerformance] = useState<RolePerformance[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<string>('');
+  const [showInactiveAgents, setShowInactiveAgents] = useState(false);
 
   const fetchRolePerformance = async () => {
     if (!panchayathId) return;
@@ -80,12 +84,14 @@ const AgentPerformanceDetails: React.FC<AgentPerformanceDetailsProps> = ({
         }
 
         const performancePercentage = totalAgents > 0 ? Math.round((activeAgents / totalAgents) * 100) : 0;
+        const inactiveAgents = totalAgents - activeAgents;
 
         rolePerformanceResults.push({
           role: role.charAt(0).toUpperCase() + role.slice(1),
           totalAgents,
           activeAgents,
-          performancePercentage
+          performancePercentage,
+          inactiveAgents
         });
       }
 
@@ -123,6 +129,13 @@ const AgentPerformanceDetails: React.FC<AgentPerformanceDetailsProps> = ({
     }
   };
 
+  const handleCardClick = (role: RolePerformance) => {
+    if (role.inactiveAgents > 0) {
+      setSelectedRole(role.role);
+      setShowInactiveAgents(true);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl">
@@ -138,7 +151,15 @@ const AgentPerformanceDetails: React.FC<AgentPerformanceDetailsProps> = ({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
             {rolePerformance.map((role) => (
-              <Card key={role.role} className="border-2">
+              <Card 
+                key={role.role} 
+                className={`border-2 transition-all duration-200 ${
+                  role.inactiveAgents > 0 
+                    ? 'cursor-pointer hover:border-primary hover:shadow-md' 
+                    : ''
+                }`}
+                onClick={() => handleCardClick(role)}
+              >
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <span className="text-2xl">{getRoleIcon(role.role)}</span>
@@ -153,6 +174,15 @@ const AgentPerformanceDetails: React.FC<AgentPerformanceDetailsProps> = ({
                     </div>
                     <span className="font-semibold">{role.activeAgents}/{role.totalAgents}</span>
                   </div>
+                  
+                  {role.inactiveAgents > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-destructive">Inactive</span>
+                      <Badge variant="destructive" className="text-xs">
+                        {role.inactiveAgents} on leave
+                      </Badge>
+                    </div>
+                  )}
                   
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Performance</span>
@@ -176,6 +206,12 @@ const AgentPerformanceDetails: React.FC<AgentPerformanceDetailsProps> = ({
                       style={{ width: `${role.performancePercentage}%` }}
                     />
                   </div>
+                  
+                  {role.inactiveAgents > 0 && (
+                    <div className="text-xs text-muted-foreground text-center">
+                      Click to view inactive agents
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -187,6 +223,14 @@ const AgentPerformanceDetails: React.FC<AgentPerformanceDetailsProps> = ({
             No agents found in this panchayath
           </div>
         )}
+
+        <InactiveAgentsList
+          isOpen={showInactiveAgents}
+          onClose={() => setShowInactiveAgents(false)}
+          panchayathId={panchayathId}
+          panchayathName={panchayathName}
+          selectedRole={selectedRole}
+        />
       </DialogContent>
     </Dialog>
   );
