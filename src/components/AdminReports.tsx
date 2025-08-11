@@ -186,55 +186,54 @@ const AdminReports = () => {
               No panchayaths with coordinators found
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Panchayath Name</TableHead>
-                  <TableHead>Coordinator</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Agents Status</TableHead>
-                  <TableHead>Performance</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {performanceData.map((item) => (
-                  <TableRow key={item.panchayathId}>
-                    <TableCell className="font-medium">{item.panchayathName}</TableCell>
-                    <TableCell>{item.coordinatorName}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Phone className="h-3 w-3" />
-                        {item.coordinatorPhone}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {performanceData.map((item) => (
+                <Card 
+                  key={item.panchayathId}
+                  className="cursor-pointer hover:shadow-md transition-all duration-200 border-2 hover:border-primary"
+                  onClick={() => setSelectedPanchayath({ id: item.panchayathId, name: item.panchayathName })}
+                >
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      <div className="text-center">
+                        <h3 className="font-semibold text-lg mb-2">{item.panchayathName}</h3>
+                        <div className="flex items-center justify-center">
+                          {getPerformanceBadge(item.performancePercentage)}
+                        </div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        <span>{item.activeAgents}/{item.totalAgents}</span>
+                      
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-primary mb-1">
+                          {item.performancePercentage}%
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Performance Score
+                        </div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getPerformanceBadge(item.performancePercentage)}
-                        <span className="text-sm">{item.performancePercentage}%</span>
+                      
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            item.performancePercentage >= 80
+                              ? 'bg-green-500'
+                              : item.performancePercentage >= 60
+                              ? 'bg-yellow-500'
+                              : item.performancePercentage >= 40
+                              ? 'bg-orange-500'
+                              : 'bg-red-500'
+                          }`}
+                          style={{ width: `${item.performancePercentage}%` }}
+                        />
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="gap-1"
-                        onClick={() => setSelectedPanchayath({ id: item.panchayathId, name: item.panchayathName })}
-                      >
-                        <Eye className="h-3 w-3" />
-                        View Details
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      
+                      <div className="text-xs text-muted-foreground text-center">
+                        Click to view details
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
