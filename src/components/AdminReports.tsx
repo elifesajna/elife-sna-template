@@ -27,21 +27,33 @@ const AdminReports = () => {
   const { toast } = useToast();
 
   const fetchAgentPerformance = useCallback(async (useCache = true) => {
-    // Check cache (5 minutes)
-    if (useCache && lastFetched && Date.now() - lastFetched.getTime() < 5 * 60 * 1000) {
-      return;
+    const CACHE_KEY = 'agent_performance_data';
+    const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+    
+    // Check localStorage cache first
+    if (useCache) {
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      if (cachedData) {
+        try {
+          const { data, timestamp } = JSON.parse(cachedData);
+          if (Date.now() - timestamp < CACHE_DURATION) {
+            setPerformanceData(data);
+            setLastFetched(new Date(timestamp));
+            return;
+          }
+        } catch (e) {
+          localStorage.removeItem(CACHE_KEY);
+        }
+      }
     }
 
     setLoading(true);
     try {
-      // Get current month boundaries
-      const now = new Date();
-      const monthStart = startOfMonth(now);
-      const monthEnd = endOfMonth(now);
-      const threeDaysAgo = subDays(now, 3);
+      const threeDaysAgo = subDays(new Date(), 3);
+      const threeDaysAgoStr = format(threeDaysAgo, 'yyyy-MM-dd');
 
-      // Fetch panchayaths with coordinators
-      const { data: panchayaths, error: panchayathError } = await supabase
+      // Optimized query: Get all data in fewer queries
+      const { data: panchayathsWithCoordinators, error: panchayathError } = await supabase
         .from('panchayaths')
         .select(`
           id,
@@ -57,58 +69,60 @@ const AdminReports = () => {
 
       if (panchayathError) throw panchayathError;
 
-      const performanceResults: AgentPerformanceData[] = [];
-
-      for (const panchayath of panchayaths || []) {
-        // Get coordinator for this panchayath
-        const coordinator = panchayath.agents?.[0];
-        if (!coordinator) continue;
-
-        // Get all agents in this panchayath
-        const { data: allAgents, error: agentsError } = await supabase
+      // Get all agents and their recent activities in batch
+      const panchayathIds = panchayathsWithCoordinators?.map(p => p.id) || [];
+      
+      const [agentsResponse, activitiesResponse] = await Promise.all([
+        supabase
           .from('agents')
-          .select('id, name')
-          .eq('panchayath_id', panchayath.id);
+          .select('id, name, panchayath_id')
+          .in('panchayath_id', panchayathIds),
+        
+        supabase
+          .from('daily_activities')
+          .select('agent_id')
+          .gte('activity_date', threeDaysAgoStr)
+      ]);
 
-        if (agentsError) throw agentsError;
+      if (agentsResponse.error) throw agentsResponse.error;
+      if (activitiesResponse.error) throw activitiesResponse.error;
 
-        const totalAgents = allAgents?.length || 0;
-        let activeAgents = 0;
+      // Create lookup sets for performance
+      const activeAgentIds = new Set(activitiesResponse.data?.map(a => a.agent_id) || []);
+      const agentsByPanchayath = (agentsResponse.data || []).reduce((acc, agent) => {
+        if (!acc[agent.panchayath_id]) acc[agent.panchayath_id] = [];
+        acc[agent.panchayath_id].push(agent);
+        return acc;
+      }, {} as Record<string, typeof agentsResponse.data>);
 
-        // Check each agent's activity in the last 3 days
-        for (const agent of allAgents || []) {
-          const { data: recentActivity, error: activityError } = await supabase
-            .from('daily_activities')
-            .select('id')
-            .eq('agent_id', agent.id)
-            .gte('activity_date', format(threeDaysAgo, 'yyyy-MM-dd'))
-            .limit(1);
-
-          if (activityError) {
-            console.error('Error checking agent activity:', activityError);
-            continue;
-          }
-
-          if (recentActivity && recentActivity.length > 0) {
-            activeAgents++;
-          }
-        }
-
+      // Calculate performance for each panchayath
+      const performanceResults: AgentPerformanceData[] = (panchayathsWithCoordinators || []).map(panchayath => {
+        const coordinator = panchayath.agents?.[0];
+        const agents = agentsByPanchayath[panchayath.id] || [];
+        const totalAgents = agents.length;
+        const activeAgents = agents.filter(agent => activeAgentIds.has(agent.id)).length;
         const performancePercentage = totalAgents > 0 ? Math.round((activeAgents / totalAgents) * 100) : 0;
 
-        performanceResults.push({
+        return {
           panchayathId: panchayath.id,
           panchayathName: panchayath.name,
-          coordinatorName: coordinator.name,
-          coordinatorPhone: coordinator.phone || 'N/A',
+          coordinatorName: coordinator?.name || 'N/A',
+          coordinatorPhone: coordinator?.phone || 'N/A',
           totalAgents,
           activeAgents,
           performancePercentage
-        });
-      }
+        };
+      }).filter(result => result.coordinatorName !== 'N/A');
 
       setPerformanceData(performanceResults);
-      setLastFetched(new Date());
+      const now = new Date();
+      setLastFetched(now);
+      
+      // Cache the results
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        data: performanceResults,
+        timestamp: now.getTime()
+      }));
       
       toast({
         title: "Success",
@@ -124,7 +138,7 @@ const AdminReports = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast, lastFetched]);
+  }, [toast]);
 
   useEffect(() => {
     fetchAgentPerformance(true);
