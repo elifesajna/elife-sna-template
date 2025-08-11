@@ -13,6 +13,9 @@ import NotFound from './pages/NotFound';
 import MembersLogin from './pages/MembersLogin';
 import MemberDashboard from './pages/MemberDashboard';
 import TeamPage from './pages/TeamPage';
+import TeamDashboard from './pages/TeamDashboard';
+import TeamTaskManagement from './pages/TeamTaskManagement';
+import TeamReports from './pages/TeamReports';
 import { AuthProvider } from './components/AuthProvider';
 import { AdminAuthProvider } from './components/AdminAuthProvider';
 import AdminPanel from './pages/AdminPanel';
@@ -43,6 +46,9 @@ function App() {
               <Route path="/members" element={<MembersLogin />} />
               <Route path="/member-dashboard" element={<MemberDashboard />} />
               <Route path="/team" element={<TeamPage />} />
+              <Route path="/team-dashboard" element={<TeamDashboard />} />
+              <Route path="/team-task-management" element={<TeamTaskManagement />} />
+              <Route path="/team-reports" element={<TeamReports />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster />
