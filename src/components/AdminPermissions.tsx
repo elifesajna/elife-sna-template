@@ -126,13 +126,13 @@ const AdminPermissions = () => {
       if (usersError) throw usersError;
       setAdminUsers(usersData || []);
 
-      // Fetch user permissions with joins
+      // Fetch user permissions with joins - specify the relationship
       const { data: userPermissionsData, error: userPermissionsError } = await supabase
         .from('admin_role_permissions')
         .select(`
           *,
           permission:admin_permissions(*),
-          admin_user:admin_users(*)
+          admin_user:admin_users!admin_role_permissions_admin_user_id_fkey(*)
         `)
         .order('created_at', { ascending: false });
 
@@ -158,8 +158,12 @@ const AdminPermissions = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (teamPermissionsError) throw teamPermissionsError;
-      setTeamPermissions((teamPermissionsData as any) || []);
+      if (teamPermissionsError) {
+        console.log('Team permissions error (table may not exist yet):', teamPermissionsError);
+        setTeamPermissions([]);
+      } else {
+        setTeamPermissions((teamPermissionsData as any) || []);
+      }
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -325,6 +329,7 @@ const AdminPermissions = () => {
     e.preventDefault();
     
     try {
+      // Check if agent_permissions table exists, if not show a helpful message
       const { error } = await supabase
         .from('agent_permissions')
         .insert([{
@@ -333,7 +338,17 @@ const AdminPermissions = () => {
           granted_by: null
         }]);
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('does not exist')) {
+          toast({
+            title: "Setup Required",
+            description: "Team permissions feature needs to be set up. Please contact your system administrator.",
+            variant: "destructive"
+          });
+          return;
+        }
+        throw error;
+      }
       
       toast({
         title: "Success",
