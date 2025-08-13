@@ -120,6 +120,45 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_permissions: {
+        Row: {
+          agent_id: string
+          created_at: string
+          granted_by: string | null
+          id: string
+          permission_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          permission_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          permission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_permissions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "admin_permissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_ratings: {
         Row: {
           agent_id: string

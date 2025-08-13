@@ -43,9 +43,11 @@ interface UserPermission {
 interface TeamMember {
   id: string;
   name: string;
-  team_id: string;
   role: string;
-  email: string;
+  email?: string;
+  panchayath_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface TeamPermission {
