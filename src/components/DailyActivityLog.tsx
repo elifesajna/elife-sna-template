@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Clock, User, Phone, Trophy, Star } from "lucide-react";
+import { CalendarDays, Clock, User, Phone, Trophy, Star, MapPin, Users } from "lucide-react";
 import { format, parseISO, isBefore, startOfToday, startOfMonth, endOfMonth } from "date-fns";
 import { typedSupabase, TABLES } from "@/lib/supabase-utils";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +18,12 @@ interface Agent {
   phone: string;
   role: string;
   panchayath_id: string;
+  panchayath?: {
+    id: string;
+    name: string;
+    ward_number?: string;
+  };
+  is_team_member?: boolean;
 }
 interface DailyActivity {
   id: string;
@@ -84,11 +90,18 @@ export const DailyActivityLog = () => {
     }
     setLoading(true);
     try {
-      const {
-        data,
-        error
-      } = await typedSupabase.from(TABLES.AGENTS).select('*').eq('phone', mobileNumber).limit(1).maybeSingle();
-      if (error || !data) {
+      // Fetch agent with panchayath details and check team membership
+      const { data: agentData, error: agentError } = await typedSupabase
+        .from(TABLES.AGENTS)
+        .select(`
+          *,
+          panchayath:panchayaths(id, name, ward_number)
+        `)
+        .eq('phone', mobileNumber)
+        .limit(1)
+        .maybeSingle();
+
+      if (agentError || !agentData) {
         toast({
           title: "Error",
           description: "Agent not found with this mobile number",
@@ -96,11 +109,25 @@ export const DailyActivityLog = () => {
         });
         return;
       }
-      setCurrentAgent(data);
-      console.log('Found agent:', data.name, 'Current date auto-selected:', format(new Date(), 'yyyy-MM-dd'));
+
+      // Check if agent is a team member
+      const { data: teamMemberData } = await typedSupabase
+        .from(TABLES.MANAGEMENT_TEAM_MEMBERS)
+        .select('id')
+        .eq('agent_id', agentData.id)
+        .limit(1)
+        .maybeSingle();
+
+      const enrichedAgent = {
+        ...agentData,
+        is_team_member: !!teamMemberData
+      };
+
+      setCurrentAgent(enrichedAgent);
+      console.log('Found agent:', enrichedAgent.name, 'Current date auto-selected:', format(new Date(), 'yyyy-MM-dd'));
       
-      const activitiesData = await fetchActivities(data.id);
-      await ensureYesterdayLeaveIfMissing(data);
+      const activitiesData = await fetchActivities(enrichedAgent.id);
+      await ensureYesterdayLeaveIfMissing(enrichedAgent);
       
       // Auto-select today's date and go directly to activity entry
       const today = new Date();
@@ -385,20 +412,38 @@ export const DailyActivityLog = () => {
                   Agent Information
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Name:</span> {currentAgent.name}
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Name:</span> {currentAgent.name}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      <span className="font-medium">Phone:</span> {currentAgent.phone}
+                    </div>
+                    {currentAgent.panchayath && (
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        <span className="font-medium">Panchayath:</span> 
+                        <span>{currentAgent.panchayath.name}</span>
+                        {currentAgent.panchayath.ward_number && (
+                          <Badge variant="secondary" className="ml-1">
+                            Ward {currentAgent.panchayath.ward_number}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline">{currentAgent.role}</Badge>
+                      {currentAgent.is_team_member && (
+                        <Badge variant="default" className="gap-1">
+                          <Users className="h-3 w-3" />
+                          Team Member
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    <span className="font-medium">Phone:</span> {currentAgent.phone}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">{currentAgent.role}</Badge>
-                  </div>
-                </div>
-              </CardContent>
+                </CardContent>
             </Card>
 
             <div>
@@ -454,7 +499,7 @@ export const DailyActivityLog = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">Name:</span> {currentAgent.name}
                     </div>
@@ -462,8 +507,26 @@ export const DailyActivityLog = () => {
                       <Phone className="h-4 w-4" />
                       <span className="font-medium">Phone:</span> {currentAgent.phone}
                     </div>
-                    <div className="flex items-center gap-2">
+                    {currentAgent.panchayath && (
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        <span className="font-medium">Panchayath:</span> 
+                        <span>{currentAgent.panchayath.name}</span>
+                        {currentAgent.panchayath.ward_number && (
+                          <Badge variant="secondary" className="ml-1">
+                            Ward {currentAgent.panchayath.ward_number}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="outline">{currentAgent.role}</Badge>
+                      {currentAgent.is_team_member && (
+                        <Badge variant="default" className="gap-1">
+                          <Users className="h-3 w-3" />
+                          Team Member
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </CardContent>
