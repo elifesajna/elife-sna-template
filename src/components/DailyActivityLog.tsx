@@ -21,7 +21,6 @@ interface Agent {
   panchayath?: {
     id: string;
     name: string;
-    ward_number?: string;
   };
   is_team_member?: boolean;
 }
@@ -97,7 +96,7 @@ export const DailyActivityLog = () => {
         .from(TABLES.AGENTS)
         .select(`
           *,
-          panchayath:panchayaths(id, name, ward_number)
+          panchayath:panchayaths(id, name)
         `)
         .eq('phone', mobileNumber)
         .limit(1)
@@ -441,11 +440,6 @@ export const DailyActivityLog = () => {
                         <MapPin className="h-4 w-4" />
                         <span className="font-medium">Panchayath:</span> 
                         <span>{currentAgent.panchayath.name}</span>
-                        {currentAgent.panchayath.ward_number && (
-                          <Badge variant="secondary" className="ml-1">
-                            Ward {currentAgent.panchayath.ward_number}
-                          </Badge>
-                        )}
                       </div>
                     )}
                     <div className="flex items-center gap-2 flex-wrap">
@@ -527,11 +521,6 @@ export const DailyActivityLog = () => {
                         <MapPin className="h-4 w-4" />
                         <span className="font-medium">Panchayath:</span> 
                         <span>{currentAgent.panchayath.name}</span>
-                        {currentAgent.panchayath.ward_number && (
-                          <Badge variant="secondary" className="ml-1">
-                            Ward {currentAgent.panchayath.ward_number}
-                          </Badge>
-                        )}
                       </div>
                     )}
                     <div className="flex items-center gap-2 flex-wrap">
