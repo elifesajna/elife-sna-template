@@ -13,7 +13,8 @@ import {
   LogOut, 
   Shield,
   Phone,
-  Building2
+  Building2,
+  GitBranch
 } from "lucide-react";
 
 // Import all admin components
@@ -25,6 +26,7 @@ import AdminNotifications from "@/components/AdminNotifications";
 import AdminPermissions from "@/components/AdminPermissions";
 import AdminSettings from "@/components/AdminSettings";
 import UserApprovals from "@/components/UserApprovals";
+import HierarchyViewForAdmin from "@/components/HierarchyViewForAdmin";
 
 interface AgentAdminPanelProps {
   mobileNumber: string;
@@ -72,6 +74,12 @@ const AgentAdminPanel: React.FC<AgentAdminPanelProps> = ({
       label: 'User Approvals', 
       icon: UserCheck, 
       component: <UserApprovals /> 
+    },
+    { 
+      id: 'hierarchy', 
+      label: 'View Hierarchy', 
+      icon: GitBranch, 
+      component: <HierarchyViewForAdmin /> 
     },
     { 
       id: 'reports', 

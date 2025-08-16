@@ -32,6 +32,8 @@ const AgentAdminAuth: React.FC<AgentAdminAuthProps> = ({ onAuthenticated }) => {
     setIsLoading(true);
 
     try {
+      console.log('Checking mobile number:', mobileNumber);
+      
       // Check if mobile number exists in management team members
       const { data: teamMember, error } = await typedSupabase
         .from(TABLES.MANAGEMENT_TEAM_MEMBERS)
@@ -41,6 +43,8 @@ const AgentAdminAuth: React.FC<AgentAdminAuthProps> = ({ onAuthenticated }) => {
         `)
         .eq('mobile_number', mobileNumber)
         .single();
+
+      console.log('Query result:', { teamMember, error });
 
       if (error || !teamMember) {
         toast({
