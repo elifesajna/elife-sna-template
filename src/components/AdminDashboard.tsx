@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from '@/integrations/supabase/client';
-import { Users, Building2, CheckSquare, UserCheck, TrendingUp } from "lucide-react";
+import { Users, Building2, CheckSquare, UserCheck, TrendingUp, GitBranch } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface DashboardStats {
   totalUsers: number;
@@ -23,6 +24,7 @@ export const AdminDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDashboardStats();
@@ -140,13 +142,22 @@ export const AdminDashboard = () => {
       color: "text-indigo-600",
       bgColor: "bg-indigo-50",
     },
+    {
+      title: "View Hierarchy",
+      value: "View",
+      icon: GitBranch,
+      description: "View organizational hierarchy",
+      color: "text-cyan-600",
+      bgColor: "bg-cyan-50",
+      clickable: true,
+    },
   ];
 
   if (loading) {
     return (
       <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-          {[...Array(5)].map((_, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+          {[...Array(6)].map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardContent className="p-6">
                 <div className="h-20 bg-gray-200 rounded"></div>
@@ -165,9 +176,13 @@ export const AdminDashboard = () => {
         <p className="text-gray-600 mt-2">Overview of system statistics and real-time updates</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
         {statCards.map((card, index) => (
-          <Card key={index} className="hover:shadow-md transition-shadow">
+          <Card 
+            key={index} 
+            className={`hover:shadow-md transition-shadow ${card.clickable ? "cursor-pointer" : ""}`}
+            onClick={card.clickable ? () => navigate('/view-hierarchy') : undefined}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
               <div className={`p-2 rounded-full ${card.bgColor}`}>
@@ -179,7 +194,7 @@ export const AdminDashboard = () => {
               <p className="text-xs text-muted-foreground mt-1">
                 {card.description}
               </p>
-              {card.title === "Pending Approvals" && card.value > 0 && (
+              {card.title === "Pending Approvals" && typeof card.value === 'number' && card.value > 0 && (
                 <Badge variant="destructive" className="mt-2">
                   Needs Attention
                 </Badge>
