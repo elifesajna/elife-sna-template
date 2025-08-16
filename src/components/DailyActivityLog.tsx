@@ -90,6 +90,8 @@ export const DailyActivityLog = () => {
     }
     setLoading(true);
     try {
+      console.log('Searching for agent with mobile number:', mobileNumber);
+      
       // Fetch agent with panchayath details and check team membership
       const { data: agentData, error: agentError } = await typedSupabase
         .from(TABLES.AGENTS)
@@ -101,10 +103,23 @@ export const DailyActivityLog = () => {
         .limit(1)
         .maybeSingle();
 
-      if (agentError || !agentData) {
+      console.log('Agent query result:', { agentData, agentError });
+      
+      if (agentError) {
+        console.error('Database error:', agentError);
         toast({
-          title: "Error",
-          description: "Agent not found with this mobile number",
+          title: "Database Error",
+          description: `Database error: ${agentError.message}`,
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      if (!agentData) {
+        console.log('No agent found with phone number:', mobileNumber);
+        toast({
+          title: "Agent Not Found",
+          description: `No agent found with mobile number: ${mobileNumber}`,
           variant: "destructive"
         });
         return;
