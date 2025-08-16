@@ -551,7 +551,7 @@ export default function TeamPage() {
                     <div key={member.id} className="bg-gray-50 p-3 rounded-lg">
                       <div className="font-medium">{member.agents?.name}</div>
                       <div className="text-sm text-gray-600">{member.agents?.phone}</div>
-                      <div className="text-xs text-gray-500">{member.agents?.role}</div>
+                      <div className="text-xs text-gray-500">Team Member</div>
                     </div>
                   ))}
                 </div>

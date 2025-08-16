@@ -799,7 +799,7 @@ const AdminPermissions = () => {
                           <TableCell>{teamPermission.agent?.name}</TableCell>
                           <TableCell>
                             <Badge variant="outline">
-                              {teamPermission.agent?.role}
+                              Team Member
                             </Badge>
                           </TableCell>
                           <TableCell className="font-mono text-sm">

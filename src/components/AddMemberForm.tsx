@@ -276,7 +276,7 @@ export const AddMemberForm = ({ isOpen, onClose, selectedTeamId, onMemberAdded }
                                   <div className="flex flex-col">
                                     <span className="font-medium">{agent.name}</span>
                                     <span className="text-sm text-gray-500">
-                                      {agent.role} + team member • {agent.phone || 'No phone'}
+                                      Team member • {agent.phone || 'No phone'}
                                     </span>
                                   </div>
                                 </SelectItem>

@@ -356,7 +356,7 @@ export default function MemberDashboard() {
               <div className="flex items-center gap-2 flex-wrap">
                 <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
                 <span className="font-medium text-gray-900 text-sm sm:text-base">{memberUser.name}</span>
-                <Badge variant="secondary" className="text-xs">{memberUser.agent?.role}</Badge>
+                <Badge variant="secondary" className="text-xs">{teamMemberships.length > 0 ? 'Team Member' : memberUser.agent?.role}</Badge>
               </div>
               <div className="flex items-center gap-2">
                 <Link to="/">
@@ -400,7 +400,7 @@ export default function MemberDashboard() {
                   <span className="font-medium">{memberUser.agent?.panchayaths?.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline">{memberUser.agent?.role}</Badge>
+                  <Badge variant="outline">{teamMemberships.length > 0 ? 'Team Member' : memberUser.agent?.role}</Badge>
                 </div>
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-gray-500" />
