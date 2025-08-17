@@ -34,33 +34,18 @@ const AgentAdminAuth: React.FC<AgentAdminAuthProps> = ({ onAuthenticated }) => {
     try {
       console.log('Checking mobile number:', mobileNumber);
       
-      // First, let's check what records exist in the table
-      const { data: allMembers, error: allError } = await typedSupabase
-        .from(TABLES.MANAGEMENT_TEAM_MEMBERS)
-        .select('mobile_number, name, management_team_id');
-      
-      console.log('All team members:', allMembers);
-      console.log('All members error:', allError);
-      
-      // Check if mobile number exists in management team members
+      // Check if mobile number exists in agents who are team members
       const { data: teamMember, error } = await typedSupabase
         .from(TABLES.MANAGEMENT_TEAM_MEMBERS)
         .select(`
           *,
+          agent:agents(*),
           management_team:management_teams(*)
         `)
-        .eq('mobile_number', mobileNumber)
+        .eq('agent.mobile_number', mobileNumber)
         .single();
 
       console.log('Query result for mobile', mobileNumber, ':', { teamMember, error });
-      
-      // Also try without the .single() to see if there are multiple records
-      const { data: allMatches, error: allMatchesError } = await typedSupabase
-        .from(TABLES.MANAGEMENT_TEAM_MEMBERS)
-        .select('*')
-        .eq('mobile_number', mobileNumber);
-      
-      console.log('All matches for mobile', mobileNumber, ':', { allMatches, allMatchesError });
 
       if (error || !teamMember) {
         toast({
